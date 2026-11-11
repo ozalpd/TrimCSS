@@ -1,0 +1,88 @@
+﻿{
+  "ProfileName": "Default Profile",
+  "TargetSourcePath": "..\\",
+  "LatestSourceWriteAt": "2026-11-11T22:50:38.1917914+03:00",
+  "LastPackedAt": "2026-11-11T22:54:46.2104658+03:00",
+  "RepoUrl": "https://github.com/ozalpd/TrimCSS",
+  "License": "MIT",
+  "IsOpenSource": true,
+  "Description": "TrimCSS is a .NET 10 desktop application designed to audit web projects, detect unused CSS classes, and refactor stylesheets. Powered by a decoupled C# core engine library (\u0060TrimCSS.dll\u0060) and a lightweight InfiniFrame desktop GUI (\u0060TrimCSS.GUI\u0060).",
+  "SystemPrompt": "",
+  "Layout": 0,
+  "LayoutHeader": "",
+  "SelectedSuffixes": [],
+  "ExcludedFolders": [
+    "bin",
+    "obj",
+    ".git",
+    ".vs",
+    ".vscode",
+    "packages",
+    "node_modules",
+    "GeneratedCodes",
+    "Library",
+    "Temp",
+    "UserSettings",
+    "Logs",
+    "Build",
+    "Builds"
+  ],
+  "TrackedFiles": {
+    "TrimCSS.slnx": {
+      "RelativePath": "TrimCSS.slnx",
+      "LastWriteTime": "2026-11-11T22:48:35.8970435+03:00",
+      "FileHash": "D085A21D00E952EE0F10DCF3797985D505F2A280C67559C37718169F7AA55976",
+      "FileSize": 131,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "README.md": {
+      "RelativePath": "README.md",
+      "LastWriteTime": "2026-11-11T22:49:43.2355515+03:00",
+      "FileHash": "AD7657BCD2DF1168488309DE7F594D58A4A66AC65A8592F2392BCA7D3B444AFE",
+      "FileSize": 2782,
+      "ContextNote": "This file is a markdown document and may not contain source code.",
+      "PackingMode": 10
+    },
+    "OzzTools\\TrimCSS-Source.ctxgen": {
+      "RelativePath": "OzzTools\\TrimCSS-Source.ctxgen",
+      "LastWriteTime": "2026-11-11T22:53:06.834516+03:00",
+      "FileHash": "C99DFD52D1C011D6D705CD3D77874AFBE72D5CED3680C7DD27AEB1E17179200E",
+      "FileSize": 2950,
+      "ContextNote": "This Context Gen file",
+      "PackingMode": 10
+    },
+    "src\\TrimCSS\\TrimCSS.csproj": {
+      "RelativePath": "src\\TrimCSS\\TrimCSS.csproj",
+      "LastWriteTime": "2026-11-11T21:39:30.4336033+03:00",
+      "FileHash": "61E3F2D043E37F0DB4BE1D8083DD31BEBBFBB8FDE2CF027327DB2556C16BC385",
+      "FileSize": 219,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj": {
+      "RelativePath": "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj",
+      "LastWriteTime": "2026-11-11T22:12:55.2405947+03:00",
+      "FileHash": "6D071CE689158FB631AE09A86C106BACA55EAF94D3E0540D9514BD14F8922EB2",
+      "FileSize": 452,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\Program.cs": {
+      "RelativePath": "src\\TrimCSS.GUI\\Program.cs",
+      "LastWriteTime": "2026-11-11T22:08:35.1141948+03:00",
+      "FileHash": "4E77F60F72953B95B5CFB99033922EC5039658116F2DDAAE06E351A1216D8361",
+      "FileSize": 570,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\wwwroot\\index.html": {
+      "RelativePath": "src\\TrimCSS.GUI\\wwwroot\\index.html",
+      "LastWriteTime": "2026-11-11T21:52:41.4571279+03:00",
+      "FileHash": "15710B06585941A60123005274A259A8D9666E244D04AFC0B34EF0592CB6AD7E",
+      "FileSize": 568,
+      "ContextNote": "",
+      "PackingMode": 20
+    }
+  }
+}

@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src\TrimCSS/TrimCSS.csproj" />
+  <Project Path="src\TrimCSS.GUI/TrimCSS.GUI.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+</Solution>
