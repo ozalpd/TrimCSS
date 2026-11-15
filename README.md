@@ -8,7 +8,7 @@
 
 **TrimCSS** helps developers identify and clean up bloated stylesheets in web applications. By parsing CSS stylesheets into ASTs and scanning static HTML markup, Razor templates (`.cshtml`), and JavaScript files for class references, TrimCSS classifies selectors into **Unused** and **Ambiguous** (such as dynamically concatenated classes in JS template literals) without slowing down on large codebases.
 
-The solution separates core analysis from presentation: all scanning, AST parsing, and classification logic lives in a standalone, cross-platform class library (`TrimCSS.dll`), paired with a fast native Windows desktop UI (`TrimCSS.GUI.exe`) built with **WPF**.
+The solution separates core analysis from presentation: all scanning, AST parsing, and classification logic lives in a standalone, cross-platform class library (`TrimCSS.Core.dll`), paired with a fast native Windows desktop UI (`TrimCSS.exe`) built with **WPF**. The GUI assembly is `TrimCSS.dll`.
 
 ---
 
@@ -33,7 +33,7 @@ TrimCSS.slnx
 ├── AGENTS.md                     # Developer & AI agent architecture guide
 ├── README.md
 └── src/
-├── TrimCSS/                  # Core Engine Class Library (net10.0)
+├── TrimCSS.Core/                  # Core Engine Class Library (net10.0)
 │   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
 │   ├── Engine/               # ProjectScanner (file discovery & classification)
 │   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult

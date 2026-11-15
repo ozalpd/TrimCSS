@@ -6,10 +6,25 @@
 		<UseWPF>true</UseWPF>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
+		<AssemblyName>TrimCSS</AssemblyName>
+		<RootNamespace>TrimCSS.GUI</RootNamespace>
+
+		<ApplicationIcon>Assets\TrimCSS-Icon.ico</ApplicationIcon>
+
+		<Company>Özalp Döndüren</Company>
+		<Product>TrimCSS</Product>
+		<Description>TrimCSS is a lightweight CSS scanner and refactoring tool.</Description>
+		<Copyright>Copyright © 2026</Copyright>
+
+		<Version>0.0.1</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\TrimCSS\TrimCSS.csproj" />
+		<Resource Include="Assets\TrimCSS-Icon.ico"/>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\TrimCSS.Core\TrimCSS.csproj" />
 	</ItemGroup>
 
 </Project>

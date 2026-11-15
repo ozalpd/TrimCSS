@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TrimCSS\TrimCSS.csproj" />
+    <ProjectReference Include="..\TrimCSS.Core\TrimCSS.csproj" />
   </ItemGroup>
 
 </Project>

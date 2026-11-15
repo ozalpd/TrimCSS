@@ -4,7 +4,7 @@ Context for AI coding agents working in this repository. Read this before making
 
 ## What this project is
 
-TrimCSS is a Windows desktop utility that scans web project source files (Razor `.cshtml`, HTML, JavaScript) to detect unused and ambiguous CSS selectors and refactor stylesheets. It is split into a headless .NET 10 scanning engine (`TrimCSS.dll`) and a native WPF desktop GUI (`TrimCSS.GUI`).
+TrimCSS is a Windows desktop utility that scans web project source files (Razor `.cshtml`, HTML, JavaScript) to detect unused and ambiguous CSS selectors and refactor stylesheets. It is split into a headless .NET 10 scanning engine (`TrimCSS.Core.dll`) and a native WPF desktop GUI (`TrimCSS.dll` / `TrimCSS.exe`).
 
 ## Solution layout
 
@@ -14,7 +14,7 @@ TrimCSS.slnx
 ├── AGENTS.md
 ├── README.md
 └── src/
-├── TrimCSS/                  # Core engine, plain class library (net10.0)
+├── TrimCSS.Core/                  # Core engine, plain class library (net10.0)
 │   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
 │   ├── Engine/               # ProjectScanner (orchestrates file discovery & matching)
 │   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult
@@ -47,13 +47,13 @@ dotnet test                                   # Run all xUnit tests
 
 ```
 
-In Visual Studio, run tests via Test Explorer (`Ctrl+R, A`). The GUI executable outputs to `src/TrimCSS.GUI/bin/Debug/net10.0-windows/TrimCSS.GUI.exe`.
+In Visual Studio, run tests via Test Explorer (`Ctrl+R, A`). The GUI executable outputs to `src/TrimCSS.GUI/bin/Debug/net10.0-windows/TrimCSS.exe`.
 
-**Target Framework boundary:** Keep `TrimCSS` and `TrimCSS.Tests` on plain `net10.0` so the scanning engine remains completely UI-agnostic and cross-platform. Only `TrimCSS.GUI` targets `net10.0-windows`.
+**Target Framework boundary:** Keep `TrimCSS.Core` and `TrimCSS.Tests` on plain `net10.0` so the scanning engine remains completely UI-agnostic and cross-platform. Only `TrimCSS.GUI` targets `net10.0-windows`.
 
 ## Architecture & key design rules
 
-### 1. Core scanning engine (`TrimCSS`)
+### 1. Core scanning engine (`TrimCSS.Core`)
 
 * `ProjectScanner` implements `ICssScanner` and coordinates directory traversal, stylesheet parsing, source token extraction, and classification.
 * **Exclusions:** Automatically skips `bin`, `obj`, `node_modules`, `.git`, `.vs`, `dist`, and `build` directories, as well as `*.min.css` files.
