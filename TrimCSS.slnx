@@ -1,8 +1,10 @@
 <Solution>
-  <Project Path="src\TrimCSS/TrimCSS.csproj" />
-  <Project Path="src\TrimCSS.GUI/TrimCSS.GUI.csproj" />
-  <Project Path="src\TrimCSS.Tests/TrimCSS.Tests.csproj" />
   <Folder Name="/Solution Items/">
+    <File Path=".github/copilot-instructions.md" />
+    <File Path="AGENTS.md" />
     <File Path="README.md" />
   </Folder>
+  <Project Path="src\TrimCSS.GUI/TrimCSS.GUI.csproj" />
+  <Project Path="src\TrimCSS.Tests/TrimCSS.Tests.csproj" />
+  <Project Path="src\TrimCSS/TrimCSS.csproj" />
 </Solution>
