@@ -1,8 +1,8 @@
 ﻿{
   "ProfileName": "Default Profile",
   "TargetSourcePath": "..\\",
-  "LatestSourceWriteAt": "2026-11-15T12:25:41.3865239+03:00",
-  "LastPackedAt": "2026-11-15T12:29:38.8134894+03:00",
+  "LatestSourceWriteAt": "2026-11-15T12:31:47.1466055+03:00",
+  "LastPackedAt": "2026-11-15T12:33:22.9070815+03:00",
   "RepoUrl": "https://github.com/ozalpd/TrimCSS",
   "License": "MIT",
   "IsOpenSource": true,
@@ -46,9 +46,9 @@
     },
     "OzzTools\\TrimCSS-Source.ctxgen": {
       "RelativePath": "OzzTools\\TrimCSS-Source.ctxgen",
-      "LastWriteTime": "2026-11-15T12:20:14.0738562+03:00",
-      "FileHash": "2C9647AE11D5757BAD0B95D72E0FB5B0E997AF5E8FC718EEFAD8E0E9BFA41ECE",
-      "FileSize": 7112,
+      "LastWriteTime": "2026-11-15T12:29:38.8179363+03:00",
+      "FileHash": "7A49AA9E32CBB5318E4748DEC596D2C9772C376102C27D3EAC02EEEB73B6D181",
+      "FileSize": 7796,
       "ContextNote": "This Context Gen file",
       "PackingMode": 10
     },
@@ -81,6 +81,14 @@
       "LastWriteTime": "2026-11-15T11:58:33.8244024+03:00",
       "FileHash": "DB1BF3CF1B055139E39C6294BA86A97F793E124531173C2C666C33C62D520BB1",
       "FileSize": 1022,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS\\Engine\\ProjectScanner.cs": {
+      "RelativePath": "src\\TrimCSS\\Engine\\ProjectScanner.cs",
+      "LastWriteTime": "2026-11-15T12:31:03.6696423+03:00",
+      "FileHash": "878B8C77046684F5AF822262BE2D8E9731245AB56454ACEE16FF0261B28D2665",
+      "FileSize": 8313,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -177,6 +185,14 @@
       "LastWriteTime": "2026-11-15T12:25:41.3865239+03:00",
       "FileHash": "7B77E541C4E1551EA84A53CF3EF894A5E3B63742B57A79998F4024718ACF0FC6",
       "FileSize": 6881,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Tests\\ProjectScannerTests.cs": {
+      "RelativePath": "src\\TrimCSS.Tests\\ProjectScannerTests.cs",
+      "LastWriteTime": "2026-11-15T12:31:47.1466055+03:00",
+      "FileHash": "FA0D1B0D28736D81DC9F6FD00B03F0698323568F7EEC8B56C0BDB4B358D61853",
+      "FileSize": 6176,
       "ContextNote": "",
       "PackingMode": 20
     },
