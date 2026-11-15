@@ -1,12 +1,14 @@
-﻿using System.ComponentModel;
+﻿using Microsoft.Win32;
+using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-using Microsoft.Win32;
 using TrimCSS.Contracts;
 using TrimCSS.Engine;
 using TrimCSS.GUI.Models;
+using TrimCSS.GUI.Services;
 using TrimCSS.Models;
 
 namespace TrimCSS.GUI;
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
             FolderPathText.Text = _selectedFolderPath;
             FolderPathText.Foreground = Brushes.White;
             ScanProjectButton.IsEnabled = true;
+            ExportReportButton.IsEnabled = false;
 
             // Reset prior results
             _allItems = [];
@@ -69,6 +72,15 @@ public partial class MainWindow : Window
 
             UpdateMetrics(result);
             BindResults(result, folder);
+            if (result.TotalCssSelectors == 0)
+            {
+                MessageBox.Show(this,
+                                "No CSS selectors were found in the selected folder.",
+                                "Scan Complete",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+                return;
+            }
         }
         catch (Exception ex)
         {
@@ -79,6 +91,85 @@ public partial class MainWindow : Window
         finally
         {
             SetScanningState(false);
+        }
+    }
+
+    // Add using at top of MainWindow.xaml.cs:
+    // using System.IO;
+    // using TrimCSS.GUI.Services;
+    private async void ExportReportButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_itemsView == null)
+        {
+            return;
+        }
+
+        List<SelectorRowItem> visibleItems = _itemsView.Cast<SelectorRowItem>().ToList();
+        if (visibleItems.Count == 0)
+        {
+            return;
+        }
+
+        string folderName = !string.IsNullOrWhiteSpace(_selectedFolderPath)
+            ? new DirectoryInfo(_selectedFolderPath).Name
+            : "project";
+
+        var dialog = new SaveFileDialog
+        {
+            Title = "Export TrimCSS Report",
+            Filter = "CSV Report (*.csv)|*.csv|JSON Report (*.json)|*.json",
+            DefaultExt = ".csv",
+            AddExtension = true,
+            FileName = $"trimcss-report-{folderName}-{DateTime.Now:yyyyMMdd-HHmm}"
+        };
+
+        if (dialog.ShowDialog(this) != true || string.IsNullOrWhiteSpace(dialog.FileName))
+        {
+            return;
+        }
+
+        ExportReportButton.IsEnabled = false;
+
+        try
+        {
+            string ext = Path.GetExtension(dialog.FileName);
+            if (string.Equals(ext, ".json", StringComparison.OrdinalIgnoreCase))
+            {
+                string activeStatus = FilterUnusedRadio.IsChecked == true ? "Unused Only"
+                    : FilterAmbiguousRadio.IsChecked == true ? "Ambiguous Only"
+                    : "All Flagged";
+
+                await ReportExporter.ExportJsonAsync(
+                    dialog.FileName,
+                    _selectedFolderPath,
+                    activeStatus,
+                    SearchBox.Text.Trim(),
+                    visibleItems);
+            }
+            else
+            {
+                await ReportExporter.ExportCsvAsync(dialog.FileName, visibleItems);
+            }
+
+            MessageBox.Show(
+                this,
+                $"Exported {visibleItems.Count:N0} selectors to:\n{dialog.FileName}",
+                "Export Complete",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                this,
+                $"Failed to export report: {ex.Message}",
+                "Export Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
+        finally
+        {
+            ExportReportButton.IsEnabled = visibleItems.Count > 0;
         }
     }
 
@@ -168,6 +259,7 @@ public partial class MainWindow : Window
         _itemsView.Refresh();
         int visibleCount = _itemsView.Cast<object>().Count();
         ResultCountText.Text = visibleCount == 1 ? "1 result" : $"{visibleCount:N0} results";
+        ExportReportButton.IsEnabled = visibleCount > 0;
 
         if (visibleCount == 0)
         {
@@ -209,6 +301,7 @@ public partial class MainWindow : Window
     {
         SelectFolderButton.IsEnabled = !isScanning;
         ScanProjectButton.IsEnabled = !isScanning && !string.IsNullOrWhiteSpace(_selectedFolderPath);
+        ExportReportButton.IsEnabled = !isScanning && (_itemsView?.Cast<object>().Any() ?? false);
         ScanProjectButton.Content = isScanning ? "Scanning..." : "Scan Project";
     }
 

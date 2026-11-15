@@ -20,7 +20,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Resource Include="Assets\TrimCSS-Icon.ico"/>
+		<Resource Include="Assets\TrimCSS-Icon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>

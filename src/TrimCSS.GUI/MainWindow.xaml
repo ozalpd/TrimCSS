@@ -148,6 +148,11 @@
                             Style="{StaticResource PrimaryButtonStyle}"
                             IsEnabled="False"
                             Click="ScanProjectButton_Click" />
+                    <Button x:Name="ExportReportButton"
+                            Content="Export Report"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            IsEnabled="False"
+                            Click="ExportReportButton_Click" />
                 </StackPanel>
             </Grid>
         </Border>
