@@ -20,7 +20,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TrimCSS\TrimCSS.csproj" />
-    <ProjectReference Include="..\TrimCSS.GUI\TrimCSS.GUI.csproj" />
   </ItemGroup>
 
 </Project>

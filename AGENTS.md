@@ -4,120 +4,79 @@ Context for AI coding agents working in this repository. Read this before making
 
 ## What this project is
 
-TrimCSS is a Windows desktop utility that scans web project source files (Razor `.cshtml`, HTML, JS/TS)
-to find unreferenced CSS selectors and prune dead styles. It consists of a headless scanning engine
-(class library) and an InfiniFrame-hosted desktop GUI whose UI is plain HTML/CSS/JS running in a
-WebView2 window.
+TrimCSS is a Windows desktop utility that scans web project source files (Razor `.cshtml`, HTML, JavaScript) to detect unused and ambiguous CSS selectors and refactor stylesheets. It is split into a headless .NET 10 scanning engine (`TrimCSS.dll`) and a native WPF desktop GUI (`TrimCSS.GUI`).
 
 ## Solution layout
 
 ```
+
 TrimCSS.slnx
+├── AGENTS.md
+├── README.md
 └── src/
-	├── TrimCSS/              # Core engine, plain class library, net10.0
-	│   ├── Contracts/        # ICssParser, ICssScanner, ISourceScanner
-	│   ├── Engine/           # ProjectScanner (orchestrates a scan)
-	│   ├── Models/           # CssSelectorInfo, ScannedToken, ScanResult
-	│   └── Parsers/          # CssParser, HtmlRazorScanner, JsScanner
-	├── TrimCSS.GUI/          # Desktop app, WinExe, net10.0-windows (Windows Forms enabled)
-	│   ├── Program.cs        # Entry point: builds InfiniFrameWindow, registers bridge
-	│   ├── Bridge/
-	│   │   └── GuiMessageBridge.cs   # JS <-> C# IPC bridge (see "Messaging protocol" below)
-	│   └── wwwroot/          # Front-end: index.html, styles.css, app.js (vanilla JS, no build step)
-	└── TrimCSS.Tests/        # xUnit tests, net10.0-windows
+├── TrimCSS/                  # Core engine, plain class library (net10.0)
+│   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
+│   ├── Engine/               # ProjectScanner (orchestrates file discovery & matching)
+│   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult
+│   └── Parsers/              # CssParser (AngleSharp.Css), HtmlRazorScanner, JsScanner (Esprima)
+├── TrimCSS.GUI/              # Native WPF desktop app (WinExe, net10.0-windows, UseWPF=true)
+│   ├── App.xaml              # Application entry point & startup URI
+│   ├── App.xaml.cs
+│   ├── MainWindow.xaml       # Dark developer theme UI + virtualized DataGrid
+│   ├── MainWindow.xaml.cs    # Folder picker, async scan execution, ICollectionView filtering
+│   └── Models/
+│       └── SelectorRowItem.cs # Row view-model wrapping CssSelectorInfo with INotifyPropertyChanged
+└── TrimCSS.Tests/            # xUnit test suite (net10.0)
+├── CssParserTests.cs
+├── HtmlRazorScannerTests.cs
+├── JsScannerTests.cs
+└── ProjectScannerTests.cs
+
 ```
 
 Key NuGet packages:
-- `TrimCSS`: AngleSharp + AngleSharp.Css (CSS/DOM parsing), Esprima (JS AST).
-- `TrimCSS.GUI`: **InfiniLore.InfiniFrame 0.62.1** (+ `.SingleFile`) — WebView2-based windowing, a Photino fork/rewrite.
+- `TrimCSS`: `AngleSharp` (HTML/DOM parsing), `AngleSharp.Css` (CSS AST parsing), `Esprima` (JS AST parsing).
+- `TrimCSS.GUI`: Zero third-party UI packages — uses built-in WPF (`net10.0-windows`) and `Microsoft.Win32.OpenFolderDialog`.
 
 ## Build, run, test
 
 ```powershell
-dotnet build                                              # whole solution
-dotnet run --project src/TrimCSS.GUI                      # run the GUI (Debug)
-dotnet test                                               # all 37 xUnit tests
+dotnet build                                  # Build entire solution
+dotnet run --project src/TrimCSS.GUI          # Launch the WPF GUI (Debug)
+dotnet test                                   # Run all xUnit tests
+
 ```
 
-In Visual Studio, tests run via Test Explorer. The GUI exe lands in
-`src/TrimCSS.GUI/bin/Debug/net10.0-windows/TrimCSS.GUI.exe`.
+In Visual Studio, run tests via Test Explorer (`Ctrl+R, A`). The GUI executable outputs to `src/TrimCSS.GUI/bin/Debug/net10.0-windows/TrimCSS.GUI.exe`.
 
-**TFM note:** `TrimCSS.GUI` and `TrimCSS.Tests` target `net10.0-windows` because the GUI uses
-Windows Forms for its folder-picker dialog (see pitfalls below). The core `TrimCSS` library stays
-on plain `net10.0`. Do not reference the GUI project from anything that must remain cross-platform.
+**Target Framework boundary:** Keep `TrimCSS` and `TrimCSS.Tests` on plain `net10.0` so the scanning engine remains completely UI-agnostic and cross-platform. Only `TrimCSS.GUI` targets `net10.0-windows`.
 
-## Architecture: how the front-end talks to C#
+## Architecture & key design rules
 
-`wwwroot/app.js` (browser context) never touches the filesystem or engine directly. Everything goes
-through `GuiMessageBridge` using **InfiniFrame's v2 envelope protocol** — this is load-bearing; see
-the pitfalls section before touching it.
+### 1. Core scanning engine (`TrimCSS`)
 
-Channels (message envelope `id`):
-- `trimcss` — JS → C# requests. Envelope `data` is a JSON string: `{ "action": string, "payload": any }`.
-- `trimcss:response` — C# → JS responses. Envelope `data` is a `BridgeResponse`:
-  `{ "action", "success", "data", "errorMessage" }` (camelCase).
+* `ProjectScanner` implements `ICssScanner` and coordinates directory traversal, stylesheet parsing, source token extraction, and classification.
+* **Exclusions:** Automatically skips `bin`, `obj`, `node_modules`, `.git`, `.vs`, `dist`, and `build` directories, as well as `*.min.css` files.
+* **Classification:**
+* Pure ID or element selectors (`TargetClasses.Count == 0`) are ignored.
+* Selectors whose `TargetClasses` all exist in exact tokens (`HtmlClassAttribute`, `RazorExpression`, `JsStringLiteral`) are treated as **used**.
+* Selectors where at least one class matches an exact token or a `JsTemplateLiteral` prefix/suffix (e.g., `alert-` matching `.alert-danger`) are flagged as **ambiguous**.
+* Selectors with zero exact or dynamic matches are flagged as **unused**.
 
-Supported actions today:
-- `selectFolder` — opens a native folder picker, responds with `{ folderPath: string | null }`
-  (`null` when the user cancels).
-- `scanProject` — payload `{ folderPath: string }`, responds with a `ScanResult` or an error message.
 
-C# side: `GuiMessageBridge.Register(builder)` hooks `builder.RegisterWebMessagePostHandler("trimcss", ...)`
-**before** `builder.Build()`. Responses are sent via `window.Features.WebMessaging.SendWebMessage(...)`
-wrapped in a hand-built envelope.
 
-JS side (`app.js`): `sendToCSharp(action, payload)` posts via
-`window.infiniframe.messaging.sendMessageToHost(...)`; incoming responses are received through
-`window.infiniframe.messaging.assignMessageReceivedHandler('trimcss:response', ...)` and dispatched
-by action in `dispatch()`.
+### 2. WPF GUI (`TrimCSS.GUI`)
 
-### Headless test seam
-
-`GuiMessageBridge.ProcessRequestAsync(BridgeRequest)` processes requests without any window —
-that is how `GuiMessageBridgeTests` exercise the bridge. When adding a new action, implement it so
-it is reachable from both `HandleMessageAsync` (windowed) and `ProcessRequestAsync` (headless), and
-add xUnit tests through `ProcessRequestAsync`.
-
-## ⚠️ InfiniFrame 0.62.1 pitfalls (learned by painful debugging — do not regress)
-
-1. **Plain JSON over `window.external.sendMessage()` goes nowhere.** `OnWebMessageReceived` in
-   InfiniFrame only raises the raw `WebMessageReceived` event for Blazor (`__bwv:`) messages;
-   anything that isn't a valid v2 envelope (`id` string + `version: 2` + `command: "Post"|"Get"`)
-   is logged as "Rejected invalid web message" and silently dropped. Always use
-   `window.infiniframe.messaging.sendMessageToHost(...)` (JS) and `RegisterWebMessagePostHandler`
-   (C#).
-
-2. **`window.external.receiveMessage` is a registrar, not a handler slot.** In InfiniFrame's JS
-   bridge it is `receiveMessage(callback)` — assigning a function to it (Photino-style) breaks the
-   bridge. Use `assignMessageReceivedHandler`.
-
-3. **InfiniFrame's own file dialogs are broken on Windows in 0.62.1.** Verified empirically:
-   - The sync `ShowOpenFolder()` (which the JS feature bridge
-	 `window.infiniframe.window.features.filePickerDialogs` routes to) **deadlocks** when invoked
-	 from the web-message handler thread.
-   - The async `ShowOpenFolderAsync()` **never completes and never shows a window** — no exception,
-	 no response.
-   This is why `GuiMessageBridge.HandleSelectFolderAsync` shows a WinForms `FolderBrowserDialog`
-   directly on the STA UI thread on Windows (`OperatingSystem.IsWindows()`), keeping the InfiniFrame
-   async call only as a non-Windows fallback. If you upgrade InfiniFrame, re-test the native dialog
-   before removing the workaround.
-
-4. **The web-message handler runs on the UI thread** (STA, since `Main` is `[STAThread]`). Blocking
-   work there freezes the window; `scanProject` offloads to `Task.Run` for this reason.
-
-5. **DEBUG builds expose Chrome DevTools Protocol on port 1888**
-   (`builder.SetRemoteDebuggingPort(1888)` + `EnableDevTools()`). Extremely useful for verifying UI
-   behavior headlessly: `GET http://localhost:1888/json`, connect to the page's
-   `webSocketDebuggerUrl`, then `Runtime.evaluate` to click buttons and read state.
+* **UI Thread responsiveness:** `MainWindow` invokes `_scanner.ScanProjectAsync(...)` inside `Task.Run(...)` so large projects (450+ files / 30,000+ selectors) never block the WPF dispatcher thread.
+* **Virtualization is load-bearing:** Real-world web projects routinely surface 25,000+ flagged selectors (especially when vendor stylesheets like Bootstrap are present). Keep `EnableRowVirtualization="True"`, `EnableColumnVirtualization="True"`, and `VirtualizingPanel.VirtualizationMode="Recycling"` enabled on `ResultsGrid` in `MainWindow.xaml`. Never replace `ResultsGrid` with a non-virtualized `ItemsControl` or `StackPanel`.
+* **Filtering:** Status pills (`All Flagged`, `Unused Only`, `Ambiguous Only`), text search, and the CSS file dropdown filter via `ICollectionView` (`CollectionViewSource.GetDefaultView`) over `_allItems` (`List<SelectorRowItem>`).
+* **Theme tokens:** Maintain the dark developer palette (`#0F0F0F` primary background, `#1A1A1A` secondary panels, `#2A2A2A` borders, `#7C5CFC` accent, `#EF4444` unused status, `#F59E0B` ambiguous status, `Consolas` for code/paths).
 
 ## Conventions
 
-- C# 12+ / .NET 10: implicit usings, nullable enabled, file-scoped namespaces.
-- Bridge JSON is camelCase (`JsonNamingPolicy.CamelCase`, case-insensitive reads).
-- Front-end is dependency-free vanilla JS with a `// ---` section-banner comment style; keep it
-  build-free (no bundlers, no npm).
-- `wwwroot/**` is copied to output (`PreserveNewest`); `Program.cs` resolves `index.html` from
-  `AppContext.BaseDirectory`.
+* C# 12+ / .NET 10: implicit usings, nullable reference types enabled, file-scoped namespaces.
+* Every new parser rule, exclusion filter, or CSS refactoring feature in `TrimCSS` must have corresponding unit/integration tests in `TrimCSS.Tests`.
+* Do not commit temporary workspace scratch folders such as `session-state/`.
 
 ## Session artifacts
 
