@@ -1,8 +1,8 @@
 ﻿{
   "ProfileName": "Default Profile",
   "TargetSourcePath": "..\\",
-  "LatestSourceWriteAt": "2026-11-15T12:31:47.1466055+03:00",
-  "LastPackedAt": "2026-11-15T12:33:22.9070815+03:00",
+  "LatestSourceWriteAt": "2026-11-15T12:42:06.5328523+03:00",
+  "LastPackedAt": "2026-11-15T13:22:24.8150541+03:00",
   "RepoUrl": "https://github.com/ozalpd/TrimCSS",
   "License": "MIT",
   "IsOpenSource": true,
@@ -46,9 +46,9 @@
     },
     "OzzTools\\TrimCSS-Source.ctxgen": {
       "RelativePath": "OzzTools\\TrimCSS-Source.ctxgen",
-      "LastWriteTime": "2026-11-15T12:29:38.8179363+03:00",
-      "FileHash": "7A49AA9E32CBB5318E4748DEC596D2C9772C376102C27D3EAC02EEEB73B6D181",
-      "FileSize": 7796,
+      "LastWriteTime": "2026-11-15T12:33:22.9100442+03:00",
+      "FileHash": "38726AEB5ED4688A81A3F8A8777F0ADE964633C541DD5143637E27B4A484D992",
+      "FileSize": 8498,
       "ContextNote": "This Context Gen file",
       "PackingMode": 10
     },
@@ -142,17 +142,25 @@
     },
     "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj": {
       "RelativePath": "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj",
-      "LastWriteTime": "2026-11-11T22:12:55.2405947+03:00",
-      "FileHash": "6D071CE689158FB631AE09A86C106BACA55EAF94D3E0540D9514BD14F8922EB2",
-      "FileSize": 452,
+      "LastWriteTime": "2026-11-15T12:41:15.7287508+03:00",
+      "FileHash": "C38899C973DE06A14D862BEAFDB0093A2142832E51EB6D90233EACEC1FDF8B0D",
+      "FileSize": 711,
       "ContextNote": "",
       "PackingMode": 20
     },
     "src\\TrimCSS.GUI\\Program.cs": {
       "RelativePath": "src\\TrimCSS.GUI\\Program.cs",
-      "LastWriteTime": "2026-11-11T22:08:35.1141948+03:00",
-      "FileHash": "4E77F60F72953B95B5CFB99033922EC5039658116F2DDAAE06E351A1216D8361",
-      "FileSize": 570,
+      "LastWriteTime": "2026-11-15T12:40:57.7067769+03:00",
+      "FileHash": "42820614E95B28D4AD1A79B13E76E1E6F475E649997CCD0CB4E15D6C72F0E4BE",
+      "FileSize": 657,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\Bridge\\GuiMessageBridge.cs": {
+      "RelativePath": "src\\TrimCSS.GUI\\Bridge\\GuiMessageBridge.cs",
+      "LastWriteTime": "2026-11-15T12:40:52.3586043+03:00",
+      "FileHash": "F2DAC56A0B30D582E10375137426F74519276AAADCBEE4CF602E83C7DBD82DCA",
+      "FileSize": 10056,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -166,9 +174,17 @@
     },
     "src\\TrimCSS.Tests\\TrimCSS.Tests.csproj": {
       "RelativePath": "src\\TrimCSS.Tests\\TrimCSS.Tests.csproj",
-      "LastWriteTime": "2026-11-12T00:02:00.8228088+03:00",
-      "FileHash": "9FAAB5CABCD23B881248FCF7F94B020E4321FB89950B342E54CA46A5369A6FA4",
-      "FileSize": 729,
+      "LastWriteTime": "2026-11-15T12:41:43.844842+03:00",
+      "FileHash": "B7D5A17652B98124BA3D0724C2457C4B402D66DE86CEE88967257C95FD2767A0",
+      "FileSize": 799,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Tests\\GuiMessageBridgeTests.cs": {
+      "RelativePath": "src\\TrimCSS.Tests\\GuiMessageBridgeTests.cs",
+      "LastWriteTime": "2026-11-15T12:42:06.5328523+03:00",
+      "FileHash": "1E5CAA32709FEC3126D1B3F1D90289943759722EF2E79E3274757CBECFA05C71",
+      "FileSize": 5515,
       "ContextNote": "",
       "PackingMode": 20
     },

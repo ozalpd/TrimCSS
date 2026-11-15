@@ -1,4 +1,5 @@
 ﻿using InfiniFrame;
+using TrimCSS.GUI.Bridge;
 
 public static class Program
 {
@@ -8,10 +9,13 @@ public static class Program
         //InfiniFrameSingleFileBootstrap.Initialize();
 
         var window = InfiniFrameWindowBuilder.Create()
-                                            .SetTitle("Trim CSS")
+                                            .SetTitle("TrimCSS")
                                             .SetSize(1280, 720)
                                             .SetStartPageUrl("index.html")
                                             .Build();
+
+        var bridge = new GuiMessageBridge();
+        bridge.Register(window);
 
         window.Center();
         window.WaitForClose();
