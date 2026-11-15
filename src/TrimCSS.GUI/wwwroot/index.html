@@ -1,25 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TrimCSS</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: system-ui, sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            background: #0f0f0f;
-            color: #f0f0f0;
-        }
-        h1 { font-size: 2rem; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trim CSS</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <h1>TrimCSS GUI</h1>
+  <div class="app-container">
+
+    <!-- ======================================================
+         Action Bar
+         ====================================================== -->
+    <header class="action-bar">
+      <div class="folder-display">
+        <span class="folder-icon">📁</span>
+        <span id="folder-path-label">No folder selected</span>
+      </div>
+      <div class="action-buttons">
+        <button id="btn-select-folder" class="btn-secondary">Select Folder</button>
+        <button id="btn-scan" class="btn-primary" disabled>
+          <span id="scan-label">Scan Project</span>
+          <span id="scan-spinner" class="spinner hidden"></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ======================================================
+         Metrics Strip
+         ====================================================== -->
+    <section class="metrics-strip">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Total CSS Selectors</div>
+      </div>
+      <div class="stat-card stat-card--red">
+        <div class="stat-value" id="stat-unused">—</div>
+        <div class="stat-label">Unused Selectors</div>
+      </div>
+      <div class="stat-card stat-card--yellow">
+        <div class="stat-value" id="stat-ambiguous">—</div>
+        <div class="stat-label">Ambiguous Selectors</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-files">—</div>
+        <div class="stat-label">Scanned Files</div>
+        <div class="stat-sub" id="stat-time"></div>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         Filter Controls
+         ====================================================== -->
+    <section class="filter-controls">
+      <div class="pill-tabs">
+        <button class="pill active" data-filter="all">All Flagged</button>
+        <button class="pill" data-filter="unused">Unused Only</button>
+        <button class="pill" data-filter="ambiguous">Ambiguous Only</button>
+      </div>
+      <input
+        type="search"
+        id="search-input"
+        class="search-input"
+        placeholder="Search selector or file path&#x2026;"
+      />
+      <select id="file-filter" class="file-filter">
+        <option value="">All CSS Files</option>
+      </select>
+      <span id="result-count" class="result-count"></span>
+    </section>
+
+    <!-- ======================================================
+         Results Table
+         ====================================================== -->
+    <main class="table-container">
+
+      <!-- Empty / Initial State -->
+      <div id="empty-state" class="empty-state">
+        <div class="empty-state-icon">&#x1F50D;</div>
+        <p>Select a project folder and click <strong>Scan Project</strong> to detect unused CSS selectors.</p>
+      </div>
+
+      <!-- Results Table (hidden until first scan) -->
+      <table id="results-table" class="results-table hidden">
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="select-all" title="Select all visible rows" /></th>
+            <th>Status</th>
+            <th>Selector</th>
+            <th>Target Classes</th>
+            <th>CSS File</th>
+            <th>Location</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+
+    </main>
+
+  </div><!-- /.app-container -->
+
+  <script src="app.js"></script>
 </body>
 </html>
-

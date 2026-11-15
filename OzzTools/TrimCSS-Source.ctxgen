@@ -1,8 +1,8 @@
 ﻿{
   "ProfileName": "Default Profile",
   "TargetSourcePath": "..\\",
-  "LatestSourceWriteAt": "2026-11-15T12:42:06.5328523+03:00",
-  "LastPackedAt": "2026-11-15T13:22:24.8150541+03:00",
+  "LatestSourceWriteAt": "2026-11-15T13:30:46.8322111+03:00",
+  "LastPackedAt": "2026-11-15T13:31:23.5880803+03:00",
   "RepoUrl": "https://github.com/ozalpd/TrimCSS",
   "License": "MIT",
   "IsOpenSource": true,
@@ -46,9 +46,9 @@
     },
     "OzzTools\\TrimCSS-Source.ctxgen": {
       "RelativePath": "OzzTools\\TrimCSS-Source.ctxgen",
-      "LastWriteTime": "2026-11-15T12:33:22.9100442+03:00",
-      "FileHash": "38726AEB5ED4688A81A3F8A8777F0ADE964633C541DD5143637E27B4A484D992",
-      "FileSize": 8498,
+      "LastWriteTime": "2026-11-15T13:22:24.8178214+03:00",
+      "FileHash": "64FA8463E71DA64E4EA1669EC7BF703E15E2D957939E8923E6AD1AF3C0F88BC9",
+      "FileSize": 9216,
       "ContextNote": "This Context Gen file",
       "PackingMode": 10
     },
@@ -164,11 +164,27 @@
       "ContextNote": "",
       "PackingMode": 20
     },
+    "src\\TrimCSS.GUI\\wwwroot\\app.js": {
+      "RelativePath": "src\\TrimCSS.GUI\\wwwroot\\app.js",
+      "LastWriteTime": "2026-11-15T13:27:10.3930716+03:00",
+      "FileHash": "12285238F47FC8D88EFD10989994B51ADB93F6C07D80DA1245536DD1B2AA23A0",
+      "FileSize": 15629,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
     "src\\TrimCSS.GUI\\wwwroot\\index.html": {
       "RelativePath": "src\\TrimCSS.GUI\\wwwroot\\index.html",
-      "LastWriteTime": "2026-11-11T21:52:41.4571279+03:00",
-      "FileHash": "15710B06585941A60123005274A259A8D9666E244D04AFC0B34EF0592CB6AD7E",
-      "FileSize": 568,
+      "LastWriteTime": "2026-11-15T13:30:46.8322111+03:00",
+      "FileHash": "5BD1C0755B676242011E2F5BFBA907EFF623E509D5CCD7B2DD0F49D71BD761CF",
+      "FileSize": 3715,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\wwwroot\\styles.css": {
+      "RelativePath": "src\\TrimCSS.GUI\\wwwroot\\styles.css",
+      "LastWriteTime": "2026-11-15T13:27:10.3824677+03:00",
+      "FileHash": "B3170731BF68D17E7973E8E5B8BF76591A680F4363380249F1C44AC0CA92FF1A",
+      "FileSize": 11430,
       "ContextNote": "",
       "PackingMode": 20
     },
