@@ -8,10 +8,12 @@ public static class Program
     {
         //InfiniFrameSingleFileBootstrap.Initialize();
 
+        string baseDirectory = AppContext.BaseDirectory;
+        var uri = new Uri(Path.Combine(baseDirectory, "wwwroot", "index.html")).AbsoluteUri;
         var window = InfiniFrameWindowBuilder.Create()
                                             .SetTitle("TrimCSS")
                                             .SetSize(1280, 720)
-                                            .SetStartPageUrl("index.html")
+                                            .SetStartPageUrl(uri)
                                             .Build();
 
         var bridge = new GuiMessageBridge();
