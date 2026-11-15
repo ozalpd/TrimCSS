@@ -53,6 +53,16 @@ public class BridgeResponse
 /// </summary>
 public class GuiMessageBridge
 {
+    /// <summary>
+    /// The envelope message id the web front-end uses when posting requests to the .NET host.
+    /// </summary>
+    public const string RequestChannel = "trimcss";
+
+    /// <summary>
+    /// The envelope message id the .NET host uses when posting responses back to the web front-end.
+    /// </summary>
+    public const string ResponseChannel = "trimcss:response";
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -72,46 +82,20 @@ public class GuiMessageBridge
     }
 
     /// <summary>
-    /// Registers this bridge's web message receiver on the specified InfiniFrame window.
-    /// </summary>
-    /// <param name="window">The window on which to register web message handlers.</param>
-    public void Register(IInfiniFrameWindow window)
-    {
-        ArgumentNullException.ThrowIfNull(window);
-
-        if (window is InfiniFrameWindow concreteWindow)
-        {
-            concreteWindow.EventsStore.WebMessageReceived.Add(async (win, e) =>
-            {
-                await HandleMessageAsync(win, e.Message);
-            });
-        }
-        else
-        {
-            var eventsStoreProp = window.GetType().GetProperty("EventsStore");
-            var eventsStore = eventsStoreProp?.GetValue(window);
-            var webMessageProp = eventsStore?.GetType().GetProperty("WebMessageReceived");
-            var addMethod = webMessageProp?.PropertyType.GetMethod("Add");
-            addMethod?.Invoke(webMessageProp?.GetValue(eventsStore), [
-                new Action<IInfiniFrameWindow, InfiniFrameWebMessageReceivedEvent>(async (win, e) =>
-                {
-                    await HandleMessageAsync(win, e.Message);
-                })
-            ]);
-        }
-    }
-
-    /// <summary>
     /// Registers this bridge's web message receiver on the specified window builder before building.
     /// </summary>
+    /// <remarks>
+    /// InfiniFrame only raises raw web-message events for its own envelope protocol, so the bridge
+    /// listens for Post envelopes on <see cref="RequestChannel"/> instead of plain JSON messages.
+    /// </remarks>
     /// <param name="builder">The window builder on which to register web message handlers.</param>
     public void Register(InfiniFrameWindowBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.EventsStore.WebMessageReceived.Add(async (win, e) =>
+        builder.RegisterWebMessagePostHandler(RequestChannel, (win, payload) =>
         {
-            await HandleMessageAsync(win, e.Message);
+            _ = HandleMessageAsync(win, payload ?? string.Empty);
         });
     }
 
@@ -194,7 +178,14 @@ public class GuiMessageBridge
 
         try
         {
-            if (window.Features.FilePickerDialogs != null)
+            if (OperatingSystem.IsWindows())
+            {
+                // InfiniFrame 0.62.1's native folder dialog never completes on Windows (the
+                // synchronous variant deadlocks and the asynchronous variant never finishes),
+                // so the WinForms picker is shown directly on the STA UI thread instead.
+                selectedFolder = ShowFolderPickerWindows();
+            }
+            else if (window.Features.FilePickerDialogs != null)
             {
                 var paths = await window.Features.FilePickerDialogs.ShowOpenFolderAsync(
                     title: "Select Web Project Folder",
@@ -212,6 +203,24 @@ public class GuiMessageBridge
         }
 
         SendSuccess(window, "selectFolder", new { folderPath = selectedFolder });
+    }
+
+    private static string? ShowFolderPickerWindows()
+    {
+        using var dialog = new FolderBrowserDialog
+        {
+            Description = "Select Web Project Folder",
+            UseDescriptionForTitle = true,
+            ShowNewFolderButton = false
+        };
+
+        var owner = new Win32WindowAdapter(System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle);
+        return dialog.ShowDialog(owner) == DialogResult.OK ? dialog.SelectedPath : null;
+    }
+
+    private sealed class Win32WindowAdapter(IntPtr handle) : System.Windows.Forms.IWin32Window
+    {
+        public IntPtr Handle { get; } = handle;
     }
 
     private async Task<BridgeResponse> ProcessScanProjectAsync(JsonElement payload)
@@ -303,8 +312,17 @@ public class GuiMessageBridge
     {
         try
         {
-            string json = JsonSerializer.Serialize(response, JsonOptions);
-            window.Features.WebMessaging?.SendWebMessage(json);
+            // InfiniFrame routes host-to-page messages through its v2 envelope protocol;
+            // wrap the payload so the front-end's response handler receives it.
+            string envelope = JsonSerializer.Serialize(new
+            {
+                id = ResponseChannel,
+                command = "Post",
+                data = response,
+                version = 2
+            }, JsonOptions);
+
+            window.Features.WebMessaging?.SendWebMessage(envelope);
         }
         catch
         {

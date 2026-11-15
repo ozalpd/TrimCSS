@@ -1,9 +1,9 @@
 /**
  * TrimCSS Dashboard — app.js
  * Vanilla JS, zero external dependencies.
- * Communicates with C# backend via InfiniFrame / Photino web messaging:
- *   JS → C#:  window.external.sendMessage(jsonString)
- *   C# → JS:  window.external.receiveMessage = function(jsonString) { ... }
+ * Communicates with the C# backend via InfiniFrame envelope web messaging:
+ *   JS → C#:  window.infiniframe.messaging.sendMessageToHost('trimcss', jsonString)
+ *   C# → JS:  window.infiniframe.messaging.assignMessageReceivedHandler('trimcss:response', fn)
  */
 
 'use strict';
@@ -52,15 +52,21 @@ function queryDom() {
 }
 
 // ---------------------------------------------------------------------------
-// InfiniFrame / Photino messaging
+// InfiniFrame messaging
 // ---------------------------------------------------------------------------
+
+const HOST_REQUEST_CHANNEL = 'trimcss';
+const HOST_RESPONSE_CHANNEL = 'trimcss:response';
+
+function getHostMessaging() {
+  return (window.infiniframe && window.infiniframe.messaging) || null;
+}
 
 /**
  * Receive a message from C# and dispatch it.
- * C# calls: window.external.receiveMessage(jsonString)
+ * Invoked by the InfiniFrame messaging layer for 'trimcss:response' envelopes.
  */
-window.external = window.external || {};
-window.external.receiveMessage = function (rawJson) {
+function handleHostMessage(rawJson) {
   let msg;
   try {
     msg = JSON.parse(rawJson);
@@ -69,7 +75,27 @@ window.external.receiveMessage = function (rawJson) {
     return;
   }
   dispatch(msg);
-};
+}
+
+function registerHostMessageHandler() {
+  const messaging = getHostMessaging();
+  if (messaging && typeof messaging.assignMessageReceivedHandler === 'function') {
+    messaging.assignMessageReceivedHandler(HOST_RESPONSE_CHANNEL, handleHostMessage);
+    return true;
+  }
+  return false;
+}
+
+// The InfiniFrame bridge script is normally injected before app.js runs, but
+// retry briefly in case the page loads before the host bridge is ready.
+if (!registerHostMessageHandler()) {
+  let attempts = 0;
+  const timer = setInterval(() => {
+    if (registerHostMessageHandler() || ++attempts >= 50) {
+      clearInterval(timer);
+    }
+  }, 100);
+}
 
 /**
  * Send a message to C#.
@@ -78,9 +104,10 @@ window.external.receiveMessage = function (rawJson) {
  */
 function sendToCSharp(action, payload = null) {
   const json = JSON.stringify({ action, payload });
+  const messaging = getHostMessaging();
   try {
-    if (window.external && typeof window.external.sendMessage === 'function') {
-      window.external.sendMessage(json);
+    if (messaging && typeof messaging.sendMessageToHost === 'function') {
+      messaging.sendMessageToHost(HOST_REQUEST_CHANNEL, json);
     } else {
       // Dev fallback: log to console when running outside InfiniFrame
       console.info('[TrimCSS] sendMessage (no host):', json);
