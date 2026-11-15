@@ -1,8 +1,8 @@
 ﻿{
   "ProfileName": "Default Profile",
   "TargetSourcePath": "..\\",
-  "LatestSourceWriteAt": "2026-11-15T12:17:29.8854693+03:00",
-  "LastPackedAt": "2026-11-15T12:20:14.0738717+03:00",
+  "LatestSourceWriteAt": "2026-11-15T12:25:41.3865239+03:00",
+  "LastPackedAt": "2026-11-15T12:29:38.8134894+03:00",
   "RepoUrl": "https://github.com/ozalpd/TrimCSS",
   "License": "MIT",
   "IsOpenSource": true,
@@ -46,17 +46,17 @@
     },
     "OzzTools\\TrimCSS-Source.ctxgen": {
       "RelativePath": "OzzTools\\TrimCSS-Source.ctxgen",
-      "LastWriteTime": "2026-11-15T12:20:06.1433562+03:00",
-      "FileHash": "0AA265CEC0F3E43822359145A8612E3C40F7D6CDA37BE0A43D7AE1A5B161E653",
+      "LastWriteTime": "2026-11-15T12:20:14.0738562+03:00",
+      "FileHash": "2C9647AE11D5757BAD0B95D72E0FB5B0E997AF5E8FC718EEFAD8E0E9BFA41ECE",
       "FileSize": 7112,
       "ContextNote": "This Context Gen file",
       "PackingMode": 10
     },
     "src\\TrimCSS\\TrimCSS.csproj": {
       "RelativePath": "src\\TrimCSS\\TrimCSS.csproj",
-      "LastWriteTime": "2026-11-15T11:58:22.3534222+03:00",
-      "FileHash": "D2EE28C7E51BDB387523DEA54F1D601CB4D68D36B9733B78EE5D5017D23BBFCC",
-      "FileSize": 383,
+      "LastWriteTime": "2026-11-15T12:23:40.3402905+03:00",
+      "FileHash": "A5A60AADF10FBE85704CE48DAC95594D88681BB5BC6A42971668236EC31B8552",
+      "FileSize": 443,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -124,6 +124,14 @@
       "ContextNote": "",
       "PackingMode": 20
     },
+    "src\\TrimCSS\\Parsers\\JsScanner.cs": {
+      "RelativePath": "src\\TrimCSS\\Parsers\\JsScanner.cs",
+      "LastWriteTime": "2026-11-15T12:25:20.5881842+03:00",
+      "FileHash": "D4862878C94C0E1D229D7266EB49CE11D3E9198020A1E4A27D46DF8656B5F4C1",
+      "FileSize": 9867,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
     "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj": {
       "RelativePath": "src\\TrimCSS.GUI\\TrimCSS.GUI.csproj",
       "LastWriteTime": "2026-11-11T22:12:55.2405947+03:00",
@@ -161,6 +169,14 @@
       "LastWriteTime": "2026-11-15T12:17:29.8854693+03:00",
       "FileHash": "37A9A3C8225DA927F694B4003629B99C98CE92F6E7ADA021D73D945F51B3120F",
       "FileSize": 6902,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Tests\\JsScannerTests.cs": {
+      "RelativePath": "src\\TrimCSS.Tests\\JsScannerTests.cs",
+      "LastWriteTime": "2026-11-15T12:25:41.3865239+03:00",
+      "FileHash": "7B77E541C4E1551EA84A53CF3EF894A5E3B63742B57A79998F4024718ACF0FC6",
+      "FileSize": 6881,
       "ContextNote": "",
       "PackingMode": 20
     },
