@@ -6,6 +6,7 @@
         Height="760"
         MinWidth="900"
         MinHeight="540"
+        Icon="Assets/TrimCSS-Icon.ico"
         WindowStartupLocation="CenterScreen"
         Background="#0F0F0F"
         Foreground="#F0F0F0"
