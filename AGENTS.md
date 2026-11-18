@@ -12,21 +12,22 @@ TrimCSS is a Windows desktop utility that scans web project source files (Razor 
 
 TrimCSS.slnx
 ├── AGENTS.md
+├── Design.md                  # Visual tokens, native typography, and WPF UI layout spec
 ├── README.md
 └── src/
-├── TrimCSS.Core/             # Core engine, plain class library (net10.0)
-│   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
-│   ├── Engine/               # ProjectScanner (orchestrates file discovery & matching)
-│   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult
-│   └── Parsers/              # CssParser (AngleSharp.Css), HtmlRazorScanner, JsScanner (Esprima)
-├── TrimCSS.GUI/              # Native WPF desktop app (WinExe, net10.0-windows, UseWPF=true)
-│   ├── App.xaml              # Application entry point & startup URI
+├── TrimCSS.Core/              # Core engine, plain class library (net10.0)
+│   ├── Contracts/             # ICssParser, ICssScanner, ISourceScanner
+│   ├── Engine/                # ProjectScanner (orchestrates file discovery & matching)
+│   ├── Models/                # CssSelectorInfo, ScannedToken, ScanResult
+│   └── Parsers/               # CssParser (AngleSharp.Css), HtmlRazorScanner, JsScanner (Esprima)
+├── TrimCSS.GUI/               # Native WPF desktop app (WinExe, net10.0-windows, UseWPF=true)
+│   ├── App.xaml               # Application entry point & startup URI
 │   ├── App.xaml.cs
-│   ├── MainWindow.xaml       # Dark developer theme UI + virtualized DataGrid
-│   ├── MainWindow.xaml.cs    # Folder picker, async scan execution, ICollectionView filtering
+│   ├── MainWindow.xaml        # Dark developer theme UI + virtualized DataGrid
+│   ├── MainWindow.xaml.cs     # Folder picker, async scan execution, ICollectionView filtering
 │   └── Models/
 │       └── SelectorRowItem.cs # Row view-model wrapping CssSelectorInfo with INotifyPropertyChanged
-└── TrimCSS.Tests/            # xUnit test suite (net10.0)
+└── TrimCSS.Tests/             # xUnit test suite (net10.0)
 ├── CssParserTests.cs
 ├── HtmlRazorScannerTests.cs
 ├── JsScannerTests.cs
@@ -67,6 +68,7 @@ In Visual Studio, run tests via Test Explorer (`Ctrl+R, A`). The GUI executable 
 
 ### 2. WPF GUI (`TrimCSS.GUI`)
 
+* **Design system:** Read `Design.md` before modifying XAML styles, colors, typography (`Segoe UI` / `Consolas`), or adding new GUI dialogs/panels.
 * **UI Thread responsiveness:** `MainWindow` invokes `_scanner.ScanProjectAsync(...)` inside `Task.Run(...)` so large projects (450+ files / 30,000+ selectors) never block the WPF dispatcher thread.
 * **Virtualization is load-bearing:** Real-world web projects routinely surface 25,000+ flagged selectors (especially when vendor stylesheets like Bootstrap are present). Keep `EnableRowVirtualization="True"`, `EnableColumnVirtualization="True"`, and `VirtualizingPanel.VirtualizationMode="Recycling"` enabled on `ResultsGrid` in `MainWindow.xaml`. Never replace `ResultsGrid` with a non-virtualized `ItemsControl` or `StackPanel`.
 * **Filtering:** Status pills (`All Flagged`, `Unused Only`, `Ambiguous Only`), text search, and the CSS file dropdown filter via `ICollectionView` (`CollectionViewSource.GetDefaultView`) over `_allItems` (`List<SelectorRowItem>`).

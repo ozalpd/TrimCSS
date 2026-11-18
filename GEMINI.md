@@ -21,6 +21,7 @@ The project is architecturally divided into:
 TrimCSS.slnx
 ├── .github/copilot-instructions.md
 ├── AGENTS.md                          # General agent instructions
+├── Design.md                          # Visual tokens, native typography, and WPF UI layout spec
 ├── GEMINI.md                          # Gemini-specific guidance & rules
 ├── README.md                          # Repository documentation
 └── src/
@@ -36,7 +37,7 @@ TrimCSS.slnx
     │   ├── MainWindow.xaml / .cs      # Dark theme UI, OpenFolderDialog, virtualized grid
     │   └── Models/
     │       └── SelectorRowItem.cs     # Row view-model with INotifyPropertyChanged
-    └── TrimCSS.Tests/                 # xUnit Test Suite (net10.0-windows / net10.0)
+    └── TrimCSS.Tests/                 # xUnit Test Suite (net10.0)
         ├── TrimCSS.Tests.csproj
         ├── CssParserTests.cs
         ├── HtmlRazorScannerTests.cs
@@ -55,7 +56,7 @@ TrimCSS.slnx
 
 ### Target Framework Boundary
 - **Keep `TrimCSS.Core` strictly UI-agnostic and cross-platform:** `TrimCSS.Core` must target standard `net10.0` with zero Windows/WPF dependencies.
-- Only `TrimCSS.GUI` targets `net10.0-windows`.
+- Only `TrimCSS.GUI` targets `net10.0`.
 - Do not introduce IPC layers, WebViews (WebView2), or local HTTP servers; the GUI calls `ProjectScanner` directly in-process via `Task.Run(...)`.
 
 ### Core Scanning Engine (`TrimCSS.Core`)
@@ -82,15 +83,7 @@ TrimCSS.slnx
     - `VirtualizingPanel.VirtualizationMode="Recycling"`
   - **NEVER** replace `ResultsGrid` with a non-virtualized container (such as `StackPanel` or un-virtualized `ItemsControl`).
 - **Data Filtering:** Instant filtering (status pills, CSS file selector dropdown, keyword search) is performed using `ICollectionView` (`CollectionViewSource.GetDefaultView`) backed by `List<SelectorRowItem>`.
-- **Design System & Theme Tokens:**
-  - Dark developer palette:
-    - Background: `#0F0F0F`
-    - Cards & Panels: `#1A1A1A`
-    - Borders: `#2A2A2A`
-    - Accent: `#7C5CFC`
-    - Unused pill / status: `#EF4444`
-    - Ambiguous pill / status: `#F59E0B`
-    - Code / Path typography: `Consolas`
+- **Design System & Theme Tokens:** For UI, XAML, and styling changes in `TrimCSS.GUI`, follow `Design.md`.
 
 ---
 
