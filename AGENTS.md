@@ -14,7 +14,7 @@ TrimCSS.slnx
 ├── AGENTS.md
 ├── README.md
 └── src/
-├── TrimCSS.Core/                  # Core engine, plain class library (net10.0)
+├── TrimCSS.Core/             # Core engine, plain class library (net10.0)
 │   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
 │   ├── Engine/               # ProjectScanner (orchestrates file discovery & matching)
 │   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult
@@ -35,7 +35,7 @@ TrimCSS.slnx
 ```
 
 Key NuGet packages:
-- `TrimCSS`: `AngleSharp` (HTML/DOM parsing), `AngleSharp.Css` (CSS AST parsing), `Esprima` (JS AST parsing).
+- `TrimCSS.Core`: `AngleSharp` (HTML/DOM parsing), `AngleSharp.Css` (CSS AST parsing), `Esprima` (JS AST parsing).
 - `TrimCSS.GUI`: Zero third-party UI packages — uses built-in WPF (`net10.0-windows`) and `Microsoft.Win32.OpenFolderDialog`.
 
 ## Build, run, test

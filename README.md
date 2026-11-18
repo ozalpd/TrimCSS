@@ -55,7 +55,7 @@ TrimCSS.slnx
 
 ### Key Components
 
-* **`TrimCSS` (`net10.0`):** Headless scanning engine using **AngleSharp** / **AngleSharp.Css** for HTML and CSS AST parsing and **Esprima** for JavaScript AST traversal.
+* **`TrimCSS.Core` (`net10.0`):** Headless scanning engine using **AngleSharp** / **AngleSharp.Css** for HTML and CSS AST parsing and **Esprima** for JavaScript AST traversal.
 * **`TrimCSS.GUI` (`net10.0-windows`):** Zero-dependency native WPF desktop client featuring a dark developer theme, background `Task.Run` scan execution, native `OpenFolderDialog` folder selection, and live `ICollectionView` filtering.
 * **`TrimCSS.Tests` (`net10.0`):** Automated xUnit test suite covering CSS rule extraction, HTML/Razor scanning, JS literal/template detection, and end-to-end project scans.
 
@@ -66,7 +66,7 @@ TrimCSS.slnx
 ### Prerequisites
 
 * [.NET 10.0 SDK](https://dotnet.microsoft.com/) or later
-* Windows 10 / 11 (for `TrimCSS.GUI`; the core `TrimCSS` library and tests run cross-platform)
+* Windows 10 / 11 (for `TrimCSS.GUI`; the core `TrimCSS.Core` library and tests run cross-platform)
 
 ### Building & Running
 

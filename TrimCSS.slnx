@@ -7,5 +7,5 @@
   </Folder>
   <Project Path="src\TrimCSS.GUI/TrimCSS.GUI.csproj" />
   <Project Path="src\TrimCSS.Tests/TrimCSS.Tests.csproj" />
-  <Project Path="src\TrimCSS.Core/TrimCSS.csproj" />
+  <Project Path="src\TrimCSS.Core/TrimCSS.Core.csproj" />
 </Solution>

@@ -194,6 +194,7 @@
                     <Button x:Name="ScanProjectButton"
                             Content="Scan Project"
                             Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,0,8,0"
                             IsEnabled="False"
                             Click="ScanProjectButton_Click" />
                     <Button x:Name="ExportReportButton"

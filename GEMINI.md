@@ -25,7 +25,7 @@ TrimCSS.slnx
 ├── README.md                          # Repository documentation
 └── src/
     ├── TrimCSS.Core/                  # Headless Core Engine (net10.0)
-    │   ├── TrimCSS.csproj             # AssemblyName: TrimCSS.Core
+    │   ├── TrimCSS.Core.csproj             # AssemblyName: TrimCSS.Core
     │   ├── Contracts/                 # ICssParser, ICssScanner, ISourceScanner
     │   ├── Engine/                    # ProjectScanner (traversal & classification orchestration)
     │   ├── Models/                    # CssSelectorInfo, ScannedToken, ScanResult

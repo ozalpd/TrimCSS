@@ -95,9 +95,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // Add using at top of MainWindow.xaml.cs:
-    // using System.IO;
-    // using TrimCSS.GUI.Services;
     private async void ExportReportButton_Click(object sender, RoutedEventArgs e)
     {
         if (_itemsView == null)
