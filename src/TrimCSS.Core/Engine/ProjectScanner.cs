@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.IO.Enumeration;
 using TrimCSS.Contracts;
 using TrimCSS.Models;
 using TrimCSS.Parsers;
@@ -11,17 +12,6 @@ namespace TrimCSS.Engine;
 /// </summary>
 public class ProjectScanner : ICssScanner
 {
-    private static readonly HashSet<string> IgnoredDirectoryNames = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "bin",
-        "obj",
-        "node_modules",
-        ".git",
-        ".vs",
-        "dist",
-        "build"
-    };
-
     private readonly ICssParser _cssParser;
     private readonly IReadOnlyList<ISourceScanner> _sourceScanners;
 
@@ -46,25 +36,34 @@ public class ProjectScanner : ICssScanner
     }
 
     /// <inheritdoc/>
-    public async Task<ScanResult> ScanProjectAsync(string projectFolderPath, CancellationToken cancellationToken = default)
+    public Task<ScanResult> ScanProjectAsync(string projectFolderPath, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(projectFolderPath);
+        return ScanProjectAsync(projectFolderPath, options: null, cancellationToken);
+    }
 
-        if (!Directory.Exists(projectFolderPath))
+    /// <inheritdoc/>
+    public async Task<ScanResult> ScanProjectAsync(string rootPath, ScanOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(rootPath);
+
+        if (!Directory.Exists(rootPath))
         {
-            throw new DirectoryNotFoundException($"The project directory '{projectFolderPath}' was not found.");
+            throw new DirectoryNotFoundException($"The project directory '{rootPath}' was not found.");
         }
 
         var stopwatch = Stopwatch.StartNew();
+        options ??= new ScanOptions();
+
+        IEnumerable<string> excludedFolders = options.ExcludedFolders ?? (IEnumerable<string>)ScanOptions.DefaultExcludedFolders;
+        IEnumerable<string> excludedFilePatterns = options.ExcludedFilePatterns ?? (IEnumerable<string>)ScanOptions.DefaultExcludedFilePatterns;
 
         // 1. Discover all non-ignored project files
-        var allFiles = DiscoverProjectFiles(projectFolderPath);
+        var allFiles = DiscoverProjectFiles(rootPath, excludedFolders, excludedFilePatterns);
         cancellationToken.ThrowIfCancellationRequested();
 
         // 2. Separate CSS files from source markup/script files
         var cssFiles = allFiles
-            .Where(f => f.EndsWith(".css", StringComparison.OrdinalIgnoreCase) &&
-                        !f.EndsWith(".min.css", StringComparison.OrdinalIgnoreCase))
+            .Where(f => f.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var sourceFiles = allFiles
@@ -171,11 +170,24 @@ public class ProjectScanner : ICssScanner
         };
     }
 
-    private static List<string> DiscoverProjectFiles(string rootPath)
+    private static List<string> DiscoverProjectFiles(
+        string rootPath,
+        IEnumerable<string> excludedFolders,
+        IEnumerable<string> excludedFilePatterns)
     {
         var result = new List<string>();
         var queue = new Queue<string>();
         queue.Enqueue(rootPath);
+
+        var excludedFolderList = excludedFolders
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Select(f => f.Trim())
+            .ToList();
+
+        var patternList = excludedFilePatterns
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .ToList();
 
         while (queue.Count > 0)
         {
@@ -187,16 +199,28 @@ public class ProjectScanner : ICssScanner
                 foreach (var subDir in Directory.GetDirectories(currentDir))
                 {
                     string dirName = Path.GetFileName(subDir);
-                    if (!IgnoredDirectoryNames.Contains(dirName))
+                    string relativeDir = Path.GetRelativePath(rootPath, subDir).Replace('\\', '/');
+
+                    bool isExcluded = excludedFolderList.Any(f =>
+                    {
+                        string trimmed = f.TrimEnd('/', '\\');
+                        return string.Equals(trimmed, dirName, StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(trimmed.Replace('\\', '/'), relativeDir, StringComparison.OrdinalIgnoreCase);
+                    });
+
+                    if (!isExcluded)
                     {
                         queue.Enqueue(subDir);
                     }
                 }
 
-                // Add files in current directory
+                // Add files in current directory that do not match exclusion patterns
                 foreach (var file in Directory.GetFiles(currentDir))
                 {
-                    result.Add(file);
+                    if (!MatchesFilePattern(file, rootPath, patternList))
+                    {
+                        result.Add(file);
+                    }
                 }
             }
             catch (UnauthorizedAccessException)
@@ -206,6 +230,38 @@ public class ProjectScanner : ICssScanner
         }
 
         return result;
+    }
+
+    private static bool MatchesFilePattern(string filePath, string rootPath, IReadOnlyList<string> patterns)
+    {
+        if (patterns.Count == 0)
+        {
+            return false;
+        }
+
+        string fileName = Path.GetFileName(filePath);
+        string relativePath = Path.GetRelativePath(rootPath, filePath).Replace('\\', '/');
+
+        foreach (var pattern in patterns)
+        {
+            if (pattern.Contains('/') || pattern.Contains('\\'))
+            {
+                string normalizedPattern = pattern.Replace('\\', '/');
+                if (FileSystemName.MatchesSimpleExpression(normalizedPattern, relativePath, ignoreCase: true))
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                if (FileSystemName.MatchesSimpleExpression(pattern, fileName, ignoreCase: true))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static bool MatchesDynamicPattern(string targetClass, string pattern)

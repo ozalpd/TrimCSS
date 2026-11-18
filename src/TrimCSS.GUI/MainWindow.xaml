@@ -108,10 +108,58 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <!-- Dark CheckBox Style -->
+        <Style x:Key="DarkCheckBoxStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border x:Name="Box"
+                                    Width="16"
+                                    Height="16"
+                                    Background="{StaticResource BgPrimary}"
+                                    BorderBrush="{StaticResource BorderBrushDark}"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    VerticalAlignment="Center">
+                                <Path x:Name="CheckMark"
+                                      Data="M 3 8 L 6 11 L 13 4"
+                                      Stroke="{StaticResource AccentBrush}"
+                                      StrokeThickness="2"
+                                      StrokeStartLineCap="Round"
+                                      StrokeEndLineCap="Round"
+                                      Visibility="Collapsed" />
+                            </Border>
+                            <ContentPresenter x:Name="Presenter" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </Trigger>
+                            <Trigger Property="HasContent" Value="False">
+                                <Setter TargetName="Presenter" Property="Visibility" Value="Collapsed" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -157,8 +205,46 @@
             </Grid>
         </Border>
 
-        <!-- Row 1: Metrics Strip -->
-        <Border Grid.Row="1" Background="{StaticResource BorderBrushDark}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1">
+        <!-- Row 1: Exclusion Rules Bar -->
+        <Border Grid.Row="1" Background="#141414" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <TextBlock Text="Exclusions:" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <TextBox x:Name="ExclusionFilterBox"
+                         Grid.Column="1"
+                         Background="{StaticResource BgPrimary}"
+                         Foreground="#F0F0F0"
+                         CaretBrush="#F0F0F0"
+                         BorderBrush="{StaticResource BorderBrushDark}"
+                         BorderThickness="1"
+                         Padding="8,5"
+                         FontSize="12"
+                         FontFamily="Consolas"
+                         VerticalContentAlignment="Center"
+                         ToolTip="Comma-separated folder names or file patterns to exclude during scan (e.g., node_modules, bin, obj, *.min.css, bootstrap*.css)"
+                         Text="*.min.css, node_modules, bin, obj, dist, build, .git, .vs" />
+
+                <CheckBox x:Name="ExcludeVendorCssCheckBox"
+                          Grid.Column="2"
+                          Content="Exclude Vendor CSS (bootstrap*, tailwind*, etc.)"
+                          Style="{StaticResource DarkCheckBoxStyle}"
+                          VerticalAlignment="Center"
+                          Margin="14,0,0,0"
+                          ToolTip="Quickly exclude common vendor frameworks (bootstrap*.css, tailwind*.css, font-awesome*.css, vendor*.css)"
+                          IsChecked="False" />
+            </Grid>
+        </Border>
+
+        <!-- Row 2: Metrics Strip -->
+        <Border Grid.Row="2" Background="{StaticResource BorderBrushDark}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1">
             <UniformGrid Columns="4">
                 <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
@@ -190,8 +276,8 @@
             </UniformGrid>
         </Border>
 
-        <!-- Row 2: Filter Controls -->
-        <Border Grid.Row="2" Background="{StaticResource BgSecondary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,8">
+        <!-- Row 3: Filter Controls -->
+        <Border Grid.Row="3" Background="{StaticResource BgSecondary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -242,8 +328,8 @@
             </Grid>
         </Border>
 
-        <!-- Row 3: Results Area (Empty State + Virtualized DataGrid) -->
-        <Grid Grid.Row="3">
+        <!-- Row 4: Results Area (Empty State + Virtualized DataGrid) -->
+        <Grid Grid.Row="4">
             <!-- Empty / Status Overlay -->
             <StackPanel x:Name="EmptyStatePanel"
                         HorizontalAlignment="Center"
@@ -317,7 +403,7 @@
                     <!-- Checkbox Column -->
                     <DataGridCheckBoxColumn Width="42" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
                         <DataGridCheckBoxColumn.Header>
-                            <CheckBox x:Name="SelectAllCheckBox" Checked="SelectAllCheckBox_Changed" Unchecked="SelectAllCheckBox_Changed" />
+                            <CheckBox x:Name="SelectAllCheckBox" Style="{StaticResource DarkCheckBoxStyle}" Checked="SelectAllCheckBox_Changed" Unchecked="SelectAllCheckBox_Changed" />
                         </DataGridCheckBoxColumn.Header>
                     </DataGridCheckBoxColumn>
 

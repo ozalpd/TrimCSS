@@ -13,5 +13,14 @@ public interface ICssScanner
     /// <param name="projectFolderPath">The root directory path of the project to scan.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A task that represents the asynchronous scan operation, yielding the overall <see cref="ScanResult"/>.</returns>
-    Task<ScanResult> ScanProjectAsync(string projectFolderPath, CancellationToken cancellationToken = default);
+    Task<ScanResult> ScanProjectAsync(string projectFolderPath, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Scans a target project folder asynchronously to identify unused and ambiguous CSS selectors using configurable scan options.
+    /// </summary>
+    /// <param name="rootPath">The root directory path of the project to scan.</param>
+    /// <param name="options">Optional configuration options for exclusions. Defaults to standard exclusions when null.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous scan operation, yielding the overall <see cref="ScanResult"/>.</returns>
+    Task<ScanResult> ScanProjectAsync(string rootPath, ScanOptions? options = null, CancellationToken cancellationToken = default);
 }

@@ -68,7 +68,8 @@ public partial class MainWindow : Window
         try
         {
             string folder = _selectedFolderPath;
-            ScanResult result = await Task.Run(() => _scanner.ScanProjectAsync(folder));
+            ScanOptions options = BuildScanOptions();
+            ScanResult result = await Task.Run(() => _scanner.ScanProjectAsync(folder, options));
 
             UpdateMetrics(result);
             BindResults(result, folder);
@@ -302,7 +303,69 @@ public partial class MainWindow : Window
         SelectFolderButton.IsEnabled = !isScanning;
         ScanProjectButton.IsEnabled = !isScanning && !string.IsNullOrWhiteSpace(_selectedFolderPath);
         ExportReportButton.IsEnabled = !isScanning && (_itemsView?.Cast<object>().Any() ?? false);
+        ExclusionFilterBox.IsEnabled = !isScanning;
+        ExcludeVendorCssCheckBox.IsEnabled = !isScanning;
         ScanProjectButton.Content = isScanning ? "Scanning..." : "Scan Project";
+    }
+
+    private ScanOptions BuildScanOptions()
+    {
+        var options = new ScanOptions
+        {
+            ExcludedFolders = new List<string>(),
+            ExcludedFilePatterns = new List<string>()
+        };
+
+        string text = ExclusionFilterBox.Text.Trim();
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            var tokens = text.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var token in tokens)
+            {
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    continue;
+                }
+
+                if (token.Contains('*') || token.Contains('?') || token.EndsWith(".css", StringComparison.OrdinalIgnoreCase) || token.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!options.ExcludedFilePatterns.Contains(token, StringComparer.OrdinalIgnoreCase))
+                    {
+                        options.ExcludedFilePatterns.Add(token);
+                    }
+                }
+                else
+                {
+                    if (!options.ExcludedFolders.Contains(token, StringComparer.OrdinalIgnoreCase))
+                    {
+                        options.ExcludedFolders.Add(token);
+                    }
+                }
+            }
+        }
+
+        if (ExcludeVendorCssCheckBox.IsChecked == true)
+        {
+            string[] vendorFilePatterns = ["bootstrap*.css", "tailwind*.css", "font-awesome*.css", "fontawesome*.css", "vendor*.css", "*vendor*.css"];
+            foreach (var pattern in vendorFilePatterns)
+            {
+                if (!options.ExcludedFilePatterns.Contains(pattern, StringComparer.OrdinalIgnoreCase))
+                {
+                    options.ExcludedFilePatterns.Add(pattern);
+                }
+            }
+
+            string[] vendorFolders = ["vendor", "vendors"];
+            foreach (var folder in vendorFolders)
+            {
+                if (!options.ExcludedFolders.Contains(folder, StringComparer.OrdinalIgnoreCase))
+                {
+                    options.ExcludedFolders.Add(folder);
+                }
+            }
+        }
+
+        return options;
     }
 
     private void FilterChanged(object sender, RoutedEventArgs e) => RefreshViewState();
