@@ -1,63 +1,35 @@
 # TrimCSS ✂️
 
-> A lightweight .NET 10 desktop utility that scans web project source files (Razor, HTML, JavaScript) to detect unused and ambiguous CSS selectors via a native, virtualized WPF interface.
+> A lightweight .NET 10 desktop utility that scans web project source files (Razor `.cshtml`, HTML, JavaScript) to detect **unused and ambiguous CSS selectors**, now also **detects unused CSS files**, and provides a **line‑level CSS diff generator** for safe refactoring.
 
 ---
 
 ## 📌 Overview
 
-**TrimCSS** helps developers identify and clean up bloated stylesheets in web applications. By parsing CSS stylesheets into ASTs and scanning static HTML markup, Razor templates (`.cshtml`), and JavaScript files for class references, TrimCSS classifies selectors into **Unused** and **Ambiguous** (such as dynamically concatenated classes in JS template literals) without slowing down on large codebases.
+**TrimCSS** helps developers clean up bloated stylesheets in web applications. It parses CSS stylesheets into ASTs and scans static HTML markup, Razor templates, and JavaScript for class references. The core engine classifies selectors into:
 
-The solution separates core analysis from presentation: all scanning, AST parsing, and classification logic lives in a standalone, cross-platform class library (`TrimCSS.Core.dll`), paired with a fast native Windows desktop UI (`TrimCSS.exe`) built with **WPF**. The GUI assembly is `TrimCSS.dll`.
+- **Unused** – no references anywhere.
+- **Ambiguous** – matched only via dynamic template literals or partial names.
+- **Unused CSS Files** – stylesheet files that are never referenced by any view, another stylesheet (`@import`), or JavaScript/TypeScript module.
+
+The solution separates the scanning logic from the UI:
+
+- **TrimCSS.Core** – a pure, cross‑platform class library (`net10.0`). Includes the new `CssDiffGenerator` utility for side‑by‑side diff previews.
+- **TrimCSS.GUI** – a native Windows desktop client built with WPF (`net10.0-windows`). Adds a *CSS Files* view, metric cards for file‑level audit, and diff preview dialogs.
+- **TrimCSS.Tests** – xUnit test suite covering selector scanning, file‑level audit, and the diff generator.
 
 ---
 
 ## ✨ Features
 
-* **Multi-Language Source Scanning:** Extracts class references from `.html`, `.htm`, Razor `.cshtml` (including Razor expressions), and `.js` files.
-* **Smart Classification:**
-  * **Unused:** Selectors whose target classes have zero static or dynamic references across the project.
-  * **Ambiguous:** Selectors partially matched or matched against dynamic JavaScript template literal prefixes/suffixes (e.g., `` `alert-${type}` `` matching `.alert-danger`), preventing accidental false-positive deletions.
-* **Automatic Noise Filtering:** Automatically skips `bin`, `obj`, `node_modules`, `.git`, `.vs`, `dist`, and `build` directories, as well as pre-minified `*.min.css` files.
-* **High-Performance Virtualized WPF Grid:** Built with row and column UI virtualization (`VirtualizingPanel.VirtualizationMode="Recycling"`) to render and filter 30,000+ flagged selectors smoothly.
-* **Instant Filtering:** Filter results in real time by status (`All Flagged`, `Unused Only`, `Ambiguous Only`), specific CSS file, or keyword search across selectors, classes, and file paths.
-
----
-
-## 🏗️ Architecture & Solution Structure
-
-
-```
-
-TrimCSS.slnx
-├── AGENTS.md                     # Developer & AI agent architecture guide
-├── README.md
-└── src/
-├── TrimCSS.Core/                  # Core Engine Class Library (net10.0)
-│   ├── Contracts/            # ICssParser, ICssScanner, ISourceScanner
-│   ├── Engine/               # ProjectScanner (file discovery & classification)
-│   ├── Models/               # CssSelectorInfo, ScannedToken, ScanResult
-│   └── Parsers/              # CssParser, HtmlRazorScanner, JsScanner
-├── TrimCSS.GUI/              # Native WPF Desktop App (net10.0-windows)
-│   ├── App.xaml              # Application entry point & startup URI
-│   ├── App.xaml.cs
-│   ├── MainWindow.xaml       # Dark developer theme & virtualized DataGrid
-│   ├── MainWindow.xaml.cs    # OpenFolderDialog, async scanning, ICollectionView filtering
-│   └── Models/
-│       └── SelectorRowItem.cs # Row view-model wrapping CssSelectorInfo
-└── TrimCSS.Tests/            # xUnit Test Suite (net10.0)
-├── CssParserTests.cs
-├── HtmlRazorScannerTests.cs
-├── JsScannerTests.cs
-└── ProjectScannerTests.cs
-
-```
-
-### Key Components
-
-* **`TrimCSS.Core` (`net10.0`):** Headless scanning engine using **AngleSharp** / **AngleSharp.Css** for HTML and CSS AST parsing and **Esprima** for JavaScript AST traversal.
-* **`TrimCSS.GUI` (`net10.0-windows`):** Zero-dependency native WPF desktop client featuring a dark developer theme, background `Task.Run` scan execution, native `OpenFolderDialog` folder selection, and live `ICollectionView` filtering.
-* **`TrimCSS.Tests` (`net10.0`):** Automated xUnit test suite covering CSS rule extraction, HTML/Razor scanning, JS literal/template detection, and end-to-end project scans.
+- Multi‑Language Source Scanning (HTML, Razor, JavaScript)
+- Smart Classification (Unused, Ambiguous selectors)
+- **Configurable folder and file exclusion patterns** (`ScanOptions` & Exclusion Rules bar)
+- **Unreferenced/unused CSS stylesheet detection** (`CssFileReferenceStatus` / `UnusedCssFileInfo`)
+- **Line‑level CSS Diff Generator** (`CssDiffGenerator` with context collapsing)
+- **Exporting filtered scan reports to CSV and JSON** (`ReportExporter`)
+- High‑Performance Virtualized WPF Grid
+- Instant Filtering by status, file, and search keywords
 
 ---
 
@@ -65,57 +37,44 @@ TrimCSS.slnx
 
 ### Prerequisites
 
-* [.NET 10.0 SDK](https://dotnet.microsoft.com/) or later
-* Windows 10 / 11 (for `TrimCSS.GUI`; the core `TrimCSS.Core` library and tests run cross-platform)
+- [.NET 10 SDK](https://dotnet.microsoft.com/) or later
+- Windows 10/11 (required for the GUI; core library runs cross‑platform)
 
 ### Building & Running
 
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/ozalpd/TrimCSS.git](https://github.com/ozalpd/TrimCSS.git)
-   cd TrimCSS
-
-```
-
-2. **Build the solution:**
 ```bash
+# Clone the repo
+git clone https://github.com/ozalpd/TrimCSS.git
+cd TrimCSS
+
+# Build the whole solution
 dotnet build
 
-```
-
-
-3. **Run the test suite:**
-```bash
+# Run the test suite (covers the new diff generator)
 dotnet test
 
-```
-
-
-4. **Launch the desktop GUI:**
-```bash
+# Launch the desktop GUI (Debug)
 dotnet run --project src/TrimCSS.GUI
-
 ```
-
-
 
 ---
 
 ## 🗺️ Roadmap
 
-* [ ] Custom folder and file exclusion patterns (e.g., ignoring third-party vendor stylesheets like `bootstrap.css`)
-* [ ] Safe CSS rule pruning with automatic file backups and side-by-side diff preview
-* [ ] Exporting filtered scan reports to CSV and JSON
+- [x] Custom folder and file exclusion patterns
+- [x] Exporting filtered scan reports to CSV and JSON
+- [ ] CSS rule pruning & removal (modal confirmation, `.bak` backups)
+- [ ] Light theme variant for the UI
+- [ ] Export diff previews to HTML for richer reporting
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Language & Runtime:** C# 12+ / .NET 10.0
-* **Desktop UI:** WPF (`net10.0-windows`)
-* **CSS & HTML Parsing:** [AngleSharp](https://anglesharp.github.io/) & [AngleSharp.Css](https://github.com/AngleSharp/AngleSharp.Css)
-* **JavaScript AST Parsing:** [Esprima .NET](https://github.com/sebastienros/esprima-dotnet)
-* **Testing:** [xUnit](https://xunit.net/)
+- **Language & Runtime:** C# 12+, .NET 10.0
+- **Desktop UI:** WPF (`net10.0-windows`) – pure XAML, no third‑party UI packages.
+- **Parsing:** AngleSharp & AngleSharp.Css for HTML/CSS, Esprima.NET for JavaScript.
+- **Testing:** xUnit
 
 ---
 
@@ -127,4 +86,4 @@ Contributions, issue reports, and feature requests are welcome! Feel free to ope
 
 ## 📄 License
 
-This project is licensed under the MIT License — see the `LICENSE` file for details.
+This project is licensed under the MIT License – see the `LICENSE` file for details.
