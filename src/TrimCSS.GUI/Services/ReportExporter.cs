@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using TrimCSS.GUI.Models;
+using TrimCSS.Models;
 
 namespace TrimCSS.GUI.Services;
 
@@ -39,24 +40,59 @@ public static class ReportExporter
         await File.WriteAllTextAsync(filePath, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
     }
 
+    public static async Task ExportCssFilesCsvAsync(string filePath, IReadOnlyList<CssFileRowItem> items)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Status,RelativePath,FullFilePath,SelectorCount,FileSizeBytes,FormattedSize,Details,Selected");
+
+        foreach (CssFileRowItem item in items)
+        {
+            sb.Append(EscapeCsv(item.Status)).Append(',')
+              .Append(EscapeCsv(item.RelativePath)).Append(',')
+              .Append(EscapeCsv(item.FullFilePath)).Append(',')
+              .Append(item.SelectorCount).Append(',')
+              .Append(item.FileSizeBytes).Append(',')
+              .Append(EscapeCsv(item.FormattedSize)).Append(',')
+              .Append(EscapeCsv(item.Details)).Append(',')
+              .Append(item.IsSelected ? "true" : "false")
+              .AppendLine();
+        }
+
+        await File.WriteAllTextAsync(filePath, sb.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+    }
+
     public static async Task ExportJsonAsync(
         string filePath,
         string? projectFolder,
         string activeStatusFilter,
         string searchQuery,
-        IReadOnlyList<SelectorRowItem> items)
+        IReadOnlyList<SelectorRowItem>? selectorItems = null,
+        IReadOnlyList<CssFileRowItem>? cssFileItems = null,
+        ScanResult? scanResult = null,
+        string? activeView = null)
     {
         var report = new
         {
             GeneratedAtUtc = DateTime.UtcNow,
             ProjectFolder = projectFolder,
+            ActiveView = activeView ?? (cssFileItems != null && (selectorItems == null || selectorItems.Count == 0) ? "CSS Files" : "Selectors"),
             Filters = new
             {
                 Status = activeStatusFilter,
                 SearchQuery = searchQuery
             },
-            TotalExported = items.Count,
-            Selectors = items.Select(item => new
+            Summary = new
+            {
+                TotalSelectors = scanResult?.TotalCssSelectors ?? selectorItems?.Count ?? 0,
+                TotalCssFiles = scanResult?.TotalCssFiles ?? cssFileItems?.Count ?? 0,
+                UnusedCssFilesCount = scanResult?.UnusedCssFiles.Count ?? cssFileItems?.Count(f => f.IsUnused) ?? 0,
+                AmbiguousCssFilesCount = scanResult?.AmbiguousCssFiles.Count ?? cssFileItems?.Count(f => !f.IsUnused) ?? 0,
+                ScannedFilesCount = scanResult?.ScannedFilesCount ?? 0,
+                ExecutionTimeMs = scanResult?.ExecutionTime.TotalMilliseconds ?? 0
+            },
+            TotalSelectorsExported = selectorItems?.Count ?? 0,
+            TotalCssFilesExported = cssFileItems?.Count ?? 0,
+            Selectors = (selectorItems ?? []).Select(item => new
             {
                 item.Status,
                 Selector = item.SelectorText,
@@ -65,6 +101,18 @@ public static class ReportExporter
                 item.FullFilePath,
                 item.Info.LineNumber,
                 item.Info.ColumnNumber,
+                item.IsSelected
+            }),
+            CssFiles = (cssFileItems ?? []).Select(item => new
+            {
+                item.Status,
+                item.RelativePath,
+                item.FullFilePath,
+                item.SelectorCount,
+                item.FileSizeBytes,
+                item.FormattedSize,
+                item.Details,
+                MatchedByFiles = item.Info.MatchedByFiles,
                 item.IsSelected
             })
         };

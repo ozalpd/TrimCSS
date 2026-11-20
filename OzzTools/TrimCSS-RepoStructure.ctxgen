@@ -1,8 +1,8 @@
 ﻿{
   "ProfileName": "Default Profile",
   "TargetSourcePath": "..\\",
-  "LatestSourceWriteAt": "2026-11-18T23:34:21.6494855+03:00",
-  "LastPackedAt": "2026-11-18T23:34:41.5548657+03:00",
+  "LatestSourceWriteAt": "2026-11-20T23:46:47.2828524+03:00",
+  "LastPackedAt": "2026-11-20T23:56:28.417711+03:00",
   "RepoUrl": "https://github.com/ozalpd/TrimCSS",
   "License": "MIT",
   "IsOpenSource": true,
@@ -38,9 +38,9 @@
     },
     "AGENTS.md": {
       "RelativePath": "AGENTS.md",
-      "LastWriteTime": "2026-11-18T22:10:17.6236211+03:00",
-      "FileHash": "73603D8A5265A35CB35A07155B0EC1F567D0C936604952D32821CE260BF0E948",
-      "FileSize": 5119,
+      "LastWriteTime": "2026-11-19T00:04:15.6707302+03:00",
+      "FileHash": "4FF03B5966563F697BED3EDF61922BE7DD794FF70EBB555A8EEEA630BF88634A",
+      "FileSize": 5375,
       "ContextNote": "This file is a markdown document and may not contain source code.",
       "PackingMode": 10
     },
@@ -54,9 +54,9 @@
     },
     "GEMINI.md": {
       "RelativePath": "GEMINI.md",
-      "LastWriteTime": "2026-11-18T22:14:25.9844993+03:00",
-      "FileHash": "F439ACAEC8DC919C749FFA096CC0090DBC868BEA0F5ED286848ECEB2A17C7FF2",
-      "FileSize": 7278,
+      "LastWriteTime": "2026-11-19T00:02:41.66528+03:00",
+      "FileHash": "B83C2165DBB9B7DBD1D4B4EBA6AC07390E2D516FC88C4A7685D62853DEB6D4A6",
+      "FileSize": 7164,
       "ContextNote": "This file is a markdown document and may not contain source code.",
       "PackingMode": 10
     },
@@ -70,17 +70,17 @@
     },
     ".github\\copilot-instructions.md": {
       "RelativePath": ".github\\copilot-instructions.md",
-      "LastWriteTime": "2026-11-18T22:21:03.8443176+03:00",
-      "FileHash": "8922C1F59AF504F9021E8588893A150C8A72A648AF2A41BF6CA7D916C3E05343",
-      "FileSize": 1382,
+      "LastWriteTime": "2026-11-18T23:54:20.4761706+03:00",
+      "FileHash": "E5E613DF537B794BF4FE63C5B009A3F6DE947D68E41F8B2E5B603547D454B50F",
+      "FileSize": 1531,
       "ContextNote": "This file is a markdown document and may not contain source code.",
       "PackingMode": 10
     },
     "OzzTools\\TrimCSS-RepoStructure.ctxgen": {
       "RelativePath": "OzzTools\\TrimCSS-RepoStructure.ctxgen",
-      "LastWriteTime": "2026-11-18T11:23:24.7512403+03:00",
-      "FileHash": "44D288CA01A854CD7E347F3EAAE2C05FC168982E3902CF564F2014827929B9D4",
-      "FileSize": 12174,
+      "LastWriteTime": "2026-11-18T23:34:41.5549421+03:00",
+      "FileHash": "412AB877DFE3D8D39CE34FBFF3003891ADED150A7EC4D74A995869F2BCA66E68",
+      "FileSize": 12541,
       "ContextNote": "This Context Gen file",
       "PackingMode": 20
     },
@@ -102,9 +102,9 @@
     },
     "src\\TrimCSS.Core\\Contracts\\ICssParser.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Contracts\\ICssParser.cs",
-      "LastWriteTime": "2026-11-11T23:40:37.4502877+03:00",
-      "FileHash": "F96C66C6AB1BF6DD45F6D5820E6E132A42C3EC009591E819D4EC7E3732817CB5",
-      "FileSize": 772,
+      "LastWriteTime": "2026-11-20T21:47:56.9293444+03:00",
+      "FileHash": "62B478B7FBEC1A8D1634130A33FCBCF021848E90C1ADD79AA7F5CA424ABAFFF4",
+      "FileSize": 1443,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -126,9 +126,17 @@
     },
     "src\\TrimCSS.Core\\Engine\\ProjectScanner.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Engine\\ProjectScanner.cs",
-      "LastWriteTime": "2026-11-18T11:13:55.8628611+03:00",
-      "FileHash": "A33DA8710B3DE8E99F83CC211F4EF5CF24B448B28E0F6EBD180C3FB1C30F66E6",
-      "FileSize": 10633,
+      "LastWriteTime": "2026-11-20T21:51:59.7675568+03:00",
+      "FileHash": "2877F8CFE9D01220BD8DED2B61B1AED50F8B550B71550B6151328756D27AEC3C",
+      "FileSize": 26525,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Core\\Models\\CssFileReferenceStatus.cs": {
+      "RelativePath": "src\\TrimCSS.Core\\Models\\CssFileReferenceStatus.cs",
+      "LastWriteTime": "2026-11-20T21:47:25.5825504+03:00",
+      "FileHash": "A0D81A4787BDBBC4FFB47985FABE7F77B603C39D9D4A9FA0426B5FE50AFFE6A5",
+      "FileSize": 589,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -158,33 +166,49 @@
     },
     "src\\TrimCSS.Core\\Models\\ScanResult.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Models\\ScanResult.cs",
-      "LastWriteTime": "2026-11-11T23:40:33.9904392+03:00",
-      "FileHash": "8B387D608A32DBD29F66DA46D0A318E8142943787DAACD0FB2020DFB8B0E83EF",
-      "FileSize": 1153,
+      "LastWriteTime": "2026-11-20T21:47:49.5387042+03:00",
+      "FileHash": "2FCEAE7FF922FEB6A286FDE2856304A4B2DA62C2C8023A47B304C36E310C1B5F",
+      "FileSize": 1822,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Core\\Models\\StylesheetReference.cs": {
+      "RelativePath": "src\\TrimCSS.Core\\Models\\StylesheetReference.cs",
+      "LastWriteTime": "2026-11-20T21:47:40.3577242+03:00",
+      "FileHash": "226BCFE0811C68C067309B3560C1D9FF989940C0914D8FC7A709B2DB91B1D09B",
+      "FileSize": 1463,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Core\\Models\\UnusedCssFileInfo.cs": {
+      "RelativePath": "src\\TrimCSS.Core\\Models\\UnusedCssFileInfo.cs",
+      "LastWriteTime": "2026-11-20T21:47:32.1177995+03:00",
+      "FileHash": "82FC95605209768F56EE86645375FBB3757F6339F0F0CE789322FDB11754F81D",
+      "FileSize": 1468,
       "ContextNote": "",
       "PackingMode": 20
     },
     "src\\TrimCSS.Core\\Parsers\\CssParser.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Parsers\\CssParser.cs",
-      "LastWriteTime": "2026-11-12T00:09:44.6488462+03:00",
-      "FileHash": "26E113C3FBFA3D8D64AC025056C171248308200275CBDD4D9F0D5DBDA8319F22",
-      "FileSize": 12799,
+      "LastWriteTime": "2026-11-20T21:48:36.1000273+03:00",
+      "FileHash": "418C095860445509998F142C26621696E33FF5FD1EBA1890C7CB87857CAFAA0D",
+      "FileSize": 15234,
       "ContextNote": "",
       "PackingMode": 20
     },
     "src\\TrimCSS.Core\\Parsers\\HtmlRazorScanner.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Parsers\\HtmlRazorScanner.cs",
-      "LastWriteTime": "2026-11-15T12:01:20.9771353+03:00",
-      "FileHash": "E2A7C3C6634DCD063393C75DF987A89AD4FC59B4EC5DFC442E3AA93B42E5261D",
-      "FileSize": 8666,
+      "LastWriteTime": "2026-11-20T21:49:29.085502+03:00",
+      "FileHash": "0F0F2E4331C072B1E4EA3A6C76916272720B701CE3B097FC44C91405B383FDCC",
+      "FileSize": 18845,
       "ContextNote": "",
       "PackingMode": 20
     },
     "src\\TrimCSS.Core\\Parsers\\JsScanner.cs": {
       "RelativePath": "src\\TrimCSS.Core\\Parsers\\JsScanner.cs",
-      "LastWriteTime": "2026-11-15T12:25:20.5881842+03:00",
-      "FileHash": "D4862878C94C0E1D229D7266EB49CE11D3E9198020A1E4A27D46DF8656B5F4C1",
-      "FileSize": 9867,
+      "LastWriteTime": "2026-11-20T21:49:57.2223883+03:00",
+      "FileHash": "7F8C84AAD2B50F5E5CEDA702EB62FEC6EB42D34DE5C465A84A29FED8346ED926",
+      "FileSize": 16216,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -222,17 +246,25 @@
     },
     "src\\TrimCSS.GUI\\MainWindow.xaml": {
       "RelativePath": "src\\TrimCSS.GUI\\MainWindow.xaml",
-      "LastWriteTime": "2026-11-18T22:24:42.6655085+03:00",
-      "FileHash": "E50FB46CD9F5AD5BB19D130D70D7F96F5A55DAF2DAA5E6CC64D11AD1A8F43891",
-      "FileSize": 27295,
+      "LastWriteTime": "2026-11-20T21:54:00.4951684+03:00",
+      "FileHash": "1587BAE02DC53F71A9A6C7806C17CE5156FBCB5B380EE1B54DD5AD495B2C723F",
+      "FileSize": 35789,
       "ContextNote": "",
       "PackingMode": 20
     },
     "src\\TrimCSS.GUI\\MainWindow.xaml.cs": {
       "RelativePath": "src\\TrimCSS.GUI\\MainWindow.xaml.cs",
-      "LastWriteTime": "2026-11-18T22:05:04.5667053+03:00",
-      "FileHash": "10055B115274D2C35AD1EE56238754DFE5032820807705209A9EA23D2055C935",
-      "FileSize": 13315,
+      "LastWriteTime": "2026-11-20T23:46:47.2828524+03:00",
+      "FileHash": "96DF1ACDEA5C08F752A2E3C59F4E5717377D57CF9A93DA3A9C7F10984DDBD9EA",
+      "FileSize": 19402,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.GUI\\Models\\CssFileRowItem.cs": {
+      "RelativePath": "src\\TrimCSS.GUI\\Models\\CssFileRowItem.cs",
+      "LastWriteTime": "2026-11-20T21:52:39.6438104+03:00",
+      "FileHash": "51480947AA7A6E09BEE271689D1032E678CBEC64A000418DAFC235607EC050F9",
+      "FileSize": 2057,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -246,9 +278,9 @@
     },
     "src\\TrimCSS.GUI\\Services\\ReportExporter.cs": {
       "RelativePath": "src\\TrimCSS.GUI\\Services\\ReportExporter.cs",
-      "LastWriteTime": "2026-11-16T15:57:57.8608967+03:00",
-      "FileHash": "94FED375C471ACE3895F74EC81069EFB109A44D6C8CA013C5583AF3E272541D3",
-      "FileSize": 3052,
+      "LastWriteTime": "2026-11-20T21:52:56.3333799+03:00",
+      "FileHash": "3A4A24D92CEA34BCD6130FF7147EDB3B38C06C48953DAF575421278AA8545C77",
+      "FileSize": 5404,
       "ContextNote": "",
       "PackingMode": 20
     },
@@ -257,6 +289,14 @@
       "LastWriteTime": "2026-11-18T22:09:13.2998491+03:00",
       "FileHash": "5621B7194129111204915B798C85332C37B8AC31FC162F31CF05CCCA48257445",
       "FileSize": 739,
+      "ContextNote": "",
+      "PackingMode": 20
+    },
+    "src\\TrimCSS.Tests\\CssFileReferenceTests.cs": {
+      "RelativePath": "src\\TrimCSS.Tests\\CssFileReferenceTests.cs",
+      "LastWriteTime": "2026-11-20T21:57:00.8834709+03:00",
+      "FileHash": "83A1CFB574C2C2284B64FBA741793E492F2AB58DE188ADDFF48854C957B44148",
+      "FileSize": 14170,
       "ContextNote": "",
       "PackingMode": 20
     },

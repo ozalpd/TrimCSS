@@ -21,10 +21,15 @@ public partial class MainWindow : Window
     private string? _selectedFolderPath;
     private List<SelectorRowItem> _allItems = [];
     private ICollectionView? _itemsView;
+    private List<CssFileRowItem> _allCssFiles = [];
+    private ICollectionView? _cssFilesView;
+    private ScanResult? _lastScanResult;
+    private bool _isUiInitialized;
 
     public MainWindow()
     {
         InitializeComponent();
+        _isUiInitialized = true;
         _scanner = new ProjectScanner();
         FileFilterCombo.ItemsSource = new[] { AllFilesOption };
         FileFilterCombo.SelectedIndex = 0;
@@ -48,10 +53,16 @@ public partial class MainWindow : Window
 
             // Reset prior results
             _allItems = [];
+            _allCssFiles = [];
+            _lastScanResult = null;
             ResultsGrid.ItemsSource = null;
             ResultsGrid.Visibility = Visibility.Collapsed;
+            CssFilesGrid.ItemsSource = null;
+            CssFilesGrid.Visibility = Visibility.Collapsed;
             EmptyStatePanel.Visibility = Visibility.Visible;
             EmptyStateMessage.Text = "Click Scan Project to analyze stylesheets in this folder.";
+            ViewModeCssFilesRadio.Content = "CSS Files";
+            ViewModeSelectorsRadio.IsChecked = true;
             ResetMetrics();
         }
     }
@@ -70,13 +81,14 @@ public partial class MainWindow : Window
             string folder = _selectedFolderPath;
             ScanOptions options = BuildScanOptions();
             ScanResult result = await Task.Run(() => _scanner.ScanProjectAsync(folder, options));
+            _lastScanResult = result;
 
             UpdateMetrics(result);
             BindResults(result, folder);
-            if (result.TotalCssSelectors == 0)
+            if (result.TotalCssSelectors == 0 && result.TotalCssFiles == 0)
             {
                 MessageBox.Show(this,
-                                "No CSS selectors were found in the selected folder.",
+                                "No CSS files or selectors were found in the selected folder.",
                                 "Scan Complete",
                                 MessageBoxButton.OK,
                                 MessageBoxImage.Information);
@@ -86,6 +98,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             ResultsGrid.Visibility = Visibility.Collapsed;
+            CssFilesGrid.Visibility = Visibility.Collapsed;
             EmptyStatePanel.Visibility = Visibility.Visible;
             EmptyStateMessage.Text = $"Scan failed: {ex.Message}";
         }
@@ -97,13 +110,21 @@ public partial class MainWindow : Window
 
     private async void ExportReportButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_itemsView == null)
+        bool isCssFilesMode = ViewModeCssFilesRadio.IsChecked == true;
+        if (isCssFilesMode && _cssFilesView == null)
+        {
+            return;
+        }
+        if (!isCssFilesMode && _itemsView == null)
         {
             return;
         }
 
-        List<SelectorRowItem> visibleItems = _itemsView.Cast<SelectorRowItem>().ToList();
-        if (visibleItems.Count == 0)
+        var visibleSelectors = _itemsView?.Cast<SelectorRowItem>().ToList() ?? [];
+        var visibleCssFiles = _cssFilesView?.Cast<CssFileRowItem>().ToList() ?? [];
+
+        int exportCount = isCssFilesMode ? visibleCssFiles.Count : visibleSelectors.Count;
+        if (exportCount == 0)
         {
             return;
         }
@@ -112,13 +133,14 @@ public partial class MainWindow : Window
             ? new DirectoryInfo(_selectedFolderPath).Name
             : "project";
 
+        string modePrefix = isCssFilesMode ? "trimcss-cssfiles" : "trimcss-report";
         var dialog = new SaveFileDialog
         {
-            Title = "Export TrimCSS Report",
+            Title = isCssFilesMode ? "Export TrimCSS Unused CSS Files Report" : "Export TrimCSS Report",
             Filter = "CSV Report (*.csv)|*.csv|JSON Report (*.json)|*.json",
             DefaultExt = ".csv",
             AddExtension = true,
-            FileName = $"trimcss-report-{folderName}-{DateTime.Now:yyyyMMdd-HHmm}"
+            FileName = $"{modePrefix}-{folderName}-{DateTime.Now:yyyyMMdd-HHmm}"
         };
 
         if (dialog.ShowDialog(this) != true || string.IsNullOrWhiteSpace(dialog.FileName))
@@ -131,27 +153,38 @@ public partial class MainWindow : Window
         try
         {
             string ext = Path.GetExtension(dialog.FileName);
+            string activeStatus = FilterUnusedRadio.IsChecked == true ? "Unused Only"
+                : FilterAmbiguousRadio.IsChecked == true ? "Ambiguous Only"
+                : "All Flagged";
+
             if (string.Equals(ext, ".json", StringComparison.OrdinalIgnoreCase))
             {
-                string activeStatus = FilterUnusedRadio.IsChecked == true ? "Unused Only"
-                    : FilterAmbiguousRadio.IsChecked == true ? "Ambiguous Only"
-                    : "All Flagged";
-
                 await ReportExporter.ExportJsonAsync(
                     dialog.FileName,
                     _selectedFolderPath,
                     activeStatus,
                     SearchBox.Text.Trim(),
-                    visibleItems);
+                    selectorItems: visibleSelectors,
+                    cssFileItems: visibleCssFiles,
+                    scanResult: _lastScanResult,
+                    activeView: isCssFilesMode ? "CSS Files" : "Selectors");
             }
             else
             {
-                await ReportExporter.ExportCsvAsync(dialog.FileName, visibleItems);
+                if (isCssFilesMode)
+                {
+                    await ReportExporter.ExportCssFilesCsvAsync(dialog.FileName, visibleCssFiles);
+                }
+                else
+                {
+                    await ReportExporter.ExportCsvAsync(dialog.FileName, visibleSelectors);
+                }
             }
 
+            string itemType = isCssFilesMode ? (exportCount == 1 ? "CSS file" : "CSS files") : (exportCount == 1 ? "selector" : "selectors");
             MessageBox.Show(
                 this,
-                $"Exported {visibleItems.Count:N0} selectors to:\n{dialog.FileName}",
+                $"Exported {exportCount:N0} {itemType} to:\n{dialog.FileName}",
                 "Export Complete",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
@@ -167,26 +200,27 @@ public partial class MainWindow : Window
         }
         finally
         {
-            ExportReportButton.IsEnabled = visibleItems.Count > 0;
+            ExportReportButton.IsEnabled = isCssFilesMode ? visibleCssFiles.Count > 0 : visibleSelectors.Count > 0;
         }
     }
 
     private void BindResults(ScanResult result, string projectRoot)
     {
-        var combined = new List<SelectorRowItem>(
+        // 1. Bind Selectors
+        var combinedSelectors = new List<SelectorRowItem>(
             result.UnusedSelectors.Count + result.AmbiguousSelectors.Count);
 
         foreach (var selector in result.UnusedSelectors)
         {
-            combined.Add(new SelectorRowItem(selector, isUnused: true, projectRoot));
+            combinedSelectors.Add(new SelectorRowItem(selector, isUnused: true, projectRoot));
         }
 
         foreach (var selector in result.AmbiguousSelectors)
         {
-            combined.Add(new SelectorRowItem(selector, isUnused: false, projectRoot));
+            combinedSelectors.Add(new SelectorRowItem(selector, isUnused: false, projectRoot));
         }
 
-        _allItems = combined;
+        _allItems = combinedSelectors;
 
         // Populate distinct CSS file dropdown
         var fileOptions = new List<string> { AllFilesOption };
@@ -202,6 +236,29 @@ public partial class MainWindow : Window
         _itemsView = CollectionViewSource.GetDefaultView(_allItems);
         _itemsView.Filter = FilterPredicate;
         ResultsGrid.ItemsSource = _itemsView;
+
+        // 2. Bind CSS Files
+        var combinedCssFiles = new List<CssFileRowItem>(
+            result.UnusedCssFiles.Count + result.AmbiguousCssFiles.Count);
+
+        foreach (var file in result.UnusedCssFiles)
+        {
+            combinedCssFiles.Add(new CssFileRowItem(file));
+        }
+
+        foreach (var file in result.AmbiguousCssFiles)
+        {
+            combinedCssFiles.Add(new CssFileRowItem(file));
+        }
+
+        _allCssFiles = combinedCssFiles;
+        _cssFilesView = CollectionViewSource.GetDefaultView(_allCssFiles);
+        _cssFilesView.Filter = CssFileFilterPredicate;
+        CssFilesGrid.ItemsSource = _cssFilesView;
+
+        // Update tab header badge
+        int flaggedFiles = _allCssFiles.Count;
+        ViewModeCssFilesRadio.Content = flaggedFiles > 0 ? $"CSS Files ({flaggedFiles})" : "CSS Files";
 
         RefreshViewState();
     }
@@ -247,30 +304,112 @@ public partial class MainWindow : Window
         return true;
     }
 
+    private bool CssFileFilterPredicate(object obj)
+    {
+        if (obj is not CssFileRowItem item)
+        {
+            return false;
+        }
+
+        if (FilterUnusedRadio.IsChecked == true && !item.IsUnused)
+        {
+            return false;
+        }
+
+        if (FilterAmbiguousRadio.IsChecked == true && item.IsUnused)
+        {
+            return false;
+        }
+
+        string query = SearchBox.Text.Trim();
+        if (!string.IsNullOrEmpty(query))
+        {
+            bool matches =
+                item.RelativePath.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Details.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+            if (!matches)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private void RefreshViewState()
     {
-        if (_itemsView == null)
+        if (!_isUiInitialized)
         {
             return;
         }
 
-        _itemsView.Refresh();
-        int visibleCount = _itemsView.Cast<object>().Count();
-        ResultCountText.Text = visibleCount == 1 ? "1 result" : $"{visibleCount:N0} results";
-        ExportReportButton.IsEnabled = visibleCount > 0;
+        bool isCssFilesMode = ViewModeCssFilesRadio.IsChecked == true;
+        FileFilterCombo.Visibility = isCssFilesMode ? Visibility.Collapsed : Visibility.Visible;
 
-        if (visibleCount == 0)
+        if (isCssFilesMode)
         {
             ResultsGrid.Visibility = Visibility.Collapsed;
-            EmptyStatePanel.Visibility = Visibility.Visible;
-            EmptyStateMessage.Text = _allItems.Count == 0
-                ? "No unused or ambiguous selectors found — your CSS looks clean!"
-                : "No selectors match your current filter.";
+
+            if (_cssFilesView == null)
+            {
+                ResultCountText.Text = string.Empty;
+                ExportReportButton.IsEnabled = false;
+                CssFilesGrid.Visibility = Visibility.Collapsed;
+                EmptyStatePanel.Visibility = Visibility.Visible;
+                return;
+            }
+
+            _cssFilesView.Refresh();
+            int visibleCount = _cssFilesView.Cast<object>().Count();
+            ResultCountText.Text = visibleCount == 1 ? "1 CSS file" : $"{visibleCount:N0} CSS files";
+            ExportReportButton.IsEnabled = visibleCount > 0;
+
+            if (visibleCount == 0)
+            {
+                CssFilesGrid.Visibility = Visibility.Collapsed;
+                EmptyStatePanel.Visibility = Visibility.Visible;
+                EmptyStateMessage.Text = _allCssFiles.Count == 0
+                    ? "No unused or ambiguous CSS files found — all stylesheets are referenced!"
+                    : "No CSS files match your current filter.";
+            }
+            else
+            {
+                EmptyStatePanel.Visibility = Visibility.Collapsed;
+                CssFilesGrid.Visibility = Visibility.Visible;
+            }
         }
         else
         {
-            EmptyStatePanel.Visibility = Visibility.Collapsed;
-            ResultsGrid.Visibility = Visibility.Visible;
+            CssFilesGrid.Visibility = Visibility.Collapsed;
+
+            if (_itemsView == null)
+            {
+                ResultCountText.Text = string.Empty;
+                ExportReportButton.IsEnabled = false;
+                ResultsGrid.Visibility = Visibility.Collapsed;
+                EmptyStatePanel.Visibility = Visibility.Visible;
+                return;
+            }
+
+            _itemsView.Refresh();
+            int visibleCount = _itemsView.Cast<object>().Count();
+            ResultCountText.Text = visibleCount == 1 ? "1 selector" : $"{visibleCount:N0} selectors";
+            ExportReportButton.IsEnabled = visibleCount > 0;
+
+            if (visibleCount == 0)
+            {
+                ResultsGrid.Visibility = Visibility.Collapsed;
+                EmptyStatePanel.Visibility = Visibility.Visible;
+                EmptyStateMessage.Text = _allItems.Count == 0
+                    ? "No unused or ambiguous selectors found — your CSS looks clean!"
+                    : "No selectors match your current filter.";
+            }
+            else
+            {
+                EmptyStatePanel.Visibility = Visibility.Collapsed;
+                ResultsGrid.Visibility = Visibility.Visible;
+            }
         }
     }
 
@@ -279,6 +418,13 @@ public partial class MainWindow : Window
         StatTotalText.Text = result.TotalCssSelectors.ToString("N0");
         StatUnusedText.Text = result.UnusedSelectors.Count.ToString("N0");
         StatAmbiguousText.Text = result.AmbiguousSelectors.Count.ToString("N0");
+
+        int unusedFiles = result.UnusedCssFiles.Count;
+        StatUnusedCssFilesText.Text = $"{unusedFiles:N0} / {result.TotalCssFiles:N0}";
+        StatUnusedCssFilesText.Foreground = unusedFiles > 0
+            ? (Brush)FindResource("RedBrush")
+            : (Brush)FindResource("TextSecondaryBrush");
+
         StatFilesText.Text = result.ScannedFilesCount.ToString("N0");
         StatTimeText.Text = result.ExecutionTime.TotalSeconds < 1
             ? $"{result.ExecutionTime.TotalMilliseconds:0}ms"
@@ -290,6 +436,8 @@ public partial class MainWindow : Window
         StatTotalText.Text = "—";
         StatUnusedText.Text = "—";
         StatAmbiguousText.Text = "—";
+        StatUnusedCssFilesText.Text = "—";
+        StatUnusedCssFilesText.Foreground = (Brush)FindResource("TextSecondaryBrush");
         StatFilesText.Text = "—";
         StatTimeText.Text = string.Empty;
         ResultCountText.Text = string.Empty;
@@ -299,9 +447,12 @@ public partial class MainWindow : Window
     {
         SelectFolderButton.IsEnabled = !isScanning;
         ScanProjectButton.IsEnabled = !isScanning && !string.IsNullOrWhiteSpace(_selectedFolderPath);
-        ExportReportButton.IsEnabled = !isScanning && (_itemsView?.Cast<object>().Any() ?? false);
+        ExportReportButton.IsEnabled = !isScanning &&
+            ((ViewModeCssFilesRadio.IsChecked == true ? _cssFilesView?.Cast<object>().Any() : _itemsView?.Cast<object>().Any()) ?? false);
         ExclusionFilterBox.IsEnabled = !isScanning;
         ExcludeVendorCssCheckBox.IsEnabled = !isScanning;
+        ViewModeSelectorsRadio.IsEnabled = !isScanning;
+        ViewModeCssFilesRadio.IsEnabled = !isScanning;
         ScanProjectButton.Content = isScanning ? "Scanning..." : "Scan Project";
     }
 
@@ -365,6 +516,8 @@ public partial class MainWindow : Window
         return options;
     }
 
+    private void ViewModeChanged(object sender, RoutedEventArgs e) => RefreshViewState();
+
     private void FilterChanged(object sender, RoutedEventArgs e) => RefreshViewState();
 
     private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => RefreshViewState();
@@ -380,6 +533,20 @@ public partial class MainWindow : Window
 
         bool isChecked = SelectAllCheckBox.IsChecked == true;
         foreach (SelectorRowItem item in _itemsView)
+        {
+            item.IsSelected = isChecked;
+        }
+    }
+
+    private void SelectAllCssFilesCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_cssFilesView == null)
+        {
+            return;
+        }
+
+        bool isChecked = SelectAllCssFilesCheckBox.IsChecked == true;
+        foreach (CssFileRowItem item in _cssFilesView)
         {
             item.IsSelected = isChecked;
         }

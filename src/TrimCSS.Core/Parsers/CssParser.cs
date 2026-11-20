@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AngleSharp.Css;
 using AngleSharp.Css.Dom;
 using AngleSharp.Css.Parser;
@@ -10,7 +11,7 @@ namespace TrimCSS.Parsers;
 /// <summary>
 /// Provides CSS stylesheet parsing and selector extraction using AngleSharp.Css.
 /// </summary>
-public class CssParser : TrimCSS.Contracts.ICssParser
+public partial class CssParser : TrimCSS.Contracts.ICssParser
 {
     private readonly AngleSharpCssParser _angleSharpParser;
 
@@ -406,4 +407,71 @@ public class CssParser : TrimCSS.Contracts.ICssParser
         public void PseudoElement(string name) { }
         public void Type(string name) { }
     }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<StylesheetReference>> ExtractImportReferencesAsync(string filePath, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        if (!File.Exists(filePath))
+        {
+            throw new FileNotFoundException($"The CSS file '{filePath}' was not found.", filePath);
+        }
+
+        string content = await File.ReadAllTextAsync(filePath, cancellationToken);
+        return ExtractImportReferences(content, filePath);
+    }
+
+    /// <summary>
+    /// Extracts @import stylesheet references from CSS text content.
+    /// </summary>
+    /// <param name="content">The raw CSS text content to inspect.</param>
+    /// <param name="filePath">Optional file path to associate with extracted references.</param>
+    /// <returns>A collection of discovered <see cref="StylesheetReference"/> instances.</returns>
+    public IEnumerable<StylesheetReference> ExtractImportReferences(string content, string filePath = "")
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return [];
+        }
+
+        var results = new List<StylesheetReference>();
+        var matches = ImportRuleRegex().Matches(content);
+
+        foreach (Match match in matches)
+        {
+            string raw = match.Groups[1].Success ? match.Groups[1].Value : match.Groups[2].Value;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                continue;
+            }
+
+            string clean = CleanImportPath(raw);
+            if (!string.IsNullOrWhiteSpace(clean))
+            {
+                results.Add(new StylesheetReference
+                {
+                    ReferencePath = clean,
+                    SourceFile = filePath,
+                    Kind = StylesheetReferenceKind.Exact
+                });
+            }
+        }
+
+        return results;
+    }
+
+    private static string CleanImportPath(string raw)
+    {
+        string trimmed = raw.Trim().Trim('"', '\'');
+        int qIdx = trimmed.IndexOfAny(['?', '#']);
+        if (qIdx >= 0)
+        {
+            trimmed = trimmed.Substring(0, qIdx).Trim();
+        }
+        return trimmed;
+    }
+
+    [GeneratedRegex(@"@import\s+(?:url\(\s*['""]?([^'"")]+)['""]?\s*\)|['""]([^'""]+)['""])", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    private static partial Regex ImportRuleRegex();
 }

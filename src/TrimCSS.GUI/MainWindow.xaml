@@ -247,7 +247,7 @@
 
         <!-- Row 2: Metrics Strip -->
         <Border Grid.Row="2" Background="{StaticResource BorderBrushDark}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1">
-            <UniformGrid Columns="4">
+            <UniformGrid Columns="5">
                 <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
                         <TextBlock x:Name="StatTotalText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" />
@@ -264,6 +264,12 @@
                     <StackPanel>
                         <TextBlock x:Name="StatAmbiguousText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{StaticResource YellowBrush}" />
                         <TextBlock Text="AMBIGUOUS SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
+                    <StackPanel>
+                        <TextBlock x:Name="StatUnusedCssFilesText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{StaticResource RedBrush}" />
+                        <TextBlock Text="UNUSED CSS FILES" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
                 <Border Background="{StaticResource BgSecondary}" Padding="16,12">
@@ -283,23 +289,32 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="280" />
                     <ColumnDefinition Width="240" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Status Pills -->
+                <!-- View Mode Switcher -->
                 <Border Grid.Column="0" Background="{StaticResource BgPrimary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
-                        <RadioButton x:Name="FilterAllRadio" Content="All Flagged" Style="{StaticResource FilterPillStyle}" IsChecked="True" Checked="FilterChanged" />
-                        <RadioButton x:Name="FilterUnusedRadio" Content="Unused Only" Style="{StaticResource FilterPillStyle}" Checked="FilterChanged" />
-                        <RadioButton x:Name="FilterAmbiguousRadio" Content="Ambiguous Only" Style="{StaticResource FilterPillStyle}" Checked="FilterChanged" />
+                        <RadioButton x:Name="ViewModeSelectorsRadio" GroupName="ViewMode" Content="Selectors" Style="{StaticResource FilterPillStyle}" IsChecked="True" Checked="ViewModeChanged" />
+                        <RadioButton x:Name="ViewModeCssFilesRadio" GroupName="ViewMode" Content="CSS Files" Style="{StaticResource FilterPillStyle}" Checked="ViewModeChanged" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Status Pills -->
+                <Border Grid.Column="1" Background="{StaticResource BgPrimary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="FilterAllRadio" GroupName="StatusFilter" Content="All Flagged" Style="{StaticResource FilterPillStyle}" IsChecked="True" Checked="FilterChanged" />
+                        <RadioButton x:Name="FilterUnusedRadio" GroupName="StatusFilter" Content="Unused Only" Style="{StaticResource FilterPillStyle}" Checked="FilterChanged" />
+                        <RadioButton x:Name="FilterAmbiguousRadio" GroupName="StatusFilter" Content="Ambiguous Only" Style="{StaticResource FilterPillStyle}" Checked="FilterChanged" />
                     </StackPanel>
                 </Border>
 
                 <!-- Search TextBox -->
                 <TextBox x:Name="SearchBox"
-                         Grid.Column="1"
+                         Grid.Column="2"
                          Background="{StaticResource BgPrimary}"
                          Foreground="#F0F0F0"
                          CaretBrush="#F0F0F0"
@@ -313,7 +328,7 @@
 
                 <!-- File Filter ComboBox -->
                 <ComboBox x:Name="FileFilterCombo"
-                          Grid.Column="2"
+                          Grid.Column="3"
                           FontFamily="Consolas"
                           FontSize="12"
                           Padding="8,5"
@@ -322,7 +337,7 @@
 
                 <!-- Result Count -->
                 <TextBlock x:Name="ResultCountText"
-                           Grid.Column="3"
+                           Grid.Column="4"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
                            FontSize="12"
@@ -455,6 +470,120 @@
 
                     <!-- Location -->
                     <DataGridTextColumn Header="LOCATION" Width="90" Binding="{Binding Location}" FontFamily="Consolas" FontSize="11.5" Foreground="#666666" IsReadOnly="True" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Virtualized CSS Files DataGrid -->
+            <DataGrid x:Name="CssFilesGrid"
+                      Visibility="Collapsed"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserResizeRows="False"
+                      IsReadOnly="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#222222"
+                      Background="{StaticResource BgPrimary}"
+                      Foreground="#F0F0F0"
+                      RowBackground="#161616"
+                      AlternatingRowBackground="#191919"
+                      BorderThickness="0"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      SelectionMode="Extended"
+                      SelectionUnit="FullRow">
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#1A1A1A" />
+                        <Setter Property="Foreground" Value="#888888" />
+                        <Setter Property="FontWeight" Value="SemiBold" />
+                        <Setter Property="FontSize" Value="11" />
+                        <Setter Property="Padding" Value="10,8" />
+                        <Setter Property="BorderBrush" Value="#2A2A2A" />
+                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="10,6" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="DataGridCell">
+                                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                       <ContentPresenter VerticalAlignment="Center" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#2A224D" />
+                                <Setter Property="Foreground" Value="#F0F0F0" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.CellStyle>
+
+                <DataGrid.Columns>
+                    <!-- Checkbox Column -->
+                    <DataGridCheckBoxColumn Width="42" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
+                        <DataGridCheckBoxColumn.Header>
+                            <CheckBox x:Name="SelectAllCssFilesCheckBox" Style="{StaticResource DarkCheckBoxStyle}" Checked="SelectAllCssFilesCheckBox_Changed" Unchecked="SelectAllCssFilesCheckBox_Changed" />
+                        </DataGridCheckBoxColumn.Header>
+                    </DataGridCheckBoxColumn>
+
+                    <!-- Status Badge Column -->
+                    <DataGridTemplateColumn Header="STATUS" Width="110" SortMemberPath="Status" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="3" Padding="7,2" HorizontalAlignment="Left">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#2B2111" />
+                                            <Setter Property="BorderBrush" Value="#664400" />
+                                            <Setter Property="BorderThickness" Value="1" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUnused}" Value="True">
+                                                    <Setter Property="Background" Value="#2B1414" />
+                                                    <Setter Property="BorderBrush" Value="#662222" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Status}" FontSize="10.5" FontWeight="Bold">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#F59E0B" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsUnused}" Value="True">
+                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- CSS File -->
+                    <DataGridTextColumn Header="CSS FILE" Width="2.5*" Binding="{Binding RelativePath}" FontFamily="Consolas" FontSize="12" IsReadOnly="True" />
+
+                    <!-- Selectors -->
+                    <DataGridTextColumn Header="SELECTORS" Width="100" Binding="{Binding SelectorCount}" FontFamily="Consolas" FontSize="11.5" Foreground="#A0A0A0" IsReadOnly="True" />
+
+                    <!-- Size -->
+                    <DataGridTextColumn Header="SIZE" Width="90" Binding="{Binding FormattedSize}" FontFamily="Consolas" FontSize="11.5" Foreground="#888888" IsReadOnly="True" />
+
+                    <!-- Details -->
+                    <DataGridTextColumn Header="DETAILS" Width="3*" Binding="{Binding Details}" FontFamily="Consolas" FontSize="11" Foreground="#666666" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
