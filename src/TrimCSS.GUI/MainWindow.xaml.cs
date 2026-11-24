@@ -35,7 +35,7 @@ public partial class MainWindow : Window
         FileFilterCombo.SelectedIndex = 0;
     }
 
-    private void SelectFolderButton_Click(object sender, RoutedEventArgs e)
+    private async void SelectFolderButton_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFolderDialog
         {
@@ -60,14 +60,21 @@ public partial class MainWindow : Window
             CssFilesGrid.ItemsSource = null;
             CssFilesGrid.Visibility = Visibility.Collapsed;
             EmptyStatePanel.Visibility = Visibility.Visible;
-            EmptyStateMessage.Text = "Click Scan Project to analyze stylesheets in this folder.";
+            EmptyStateMessage.Text = "Scanning project stylesheets...";
             ViewModeCssFilesRadio.Content = "CSS Files";
             ViewModeSelectorsRadio.IsChecked = true;
             ResetMetrics();
+
+            await RunScanAsync();
         }
     }
 
     private async void ScanProjectButton_Click(object sender, RoutedEventArgs e)
+    {
+        await RunScanAsync();
+    }
+
+    private async Task RunScanAsync()
     {
         if (string.IsNullOrWhiteSpace(_selectedFolderPath))
         {
@@ -85,14 +92,14 @@ public partial class MainWindow : Window
 
             UpdateMetrics(result);
             BindResults(result, folder);
+
             if (result.TotalCssSelectors == 0 && result.TotalCssFiles == 0)
             {
                 MessageBox.Show(this,
-                                "No CSS files or selectors were found in the selected folder.",
-                                "Scan Complete",
-                                MessageBoxButton.OK,
-                                MessageBoxImage.Information);
-                return;
+                    "No CSS files or selectors were found in the selected folder.",
+                    "Scan Complete",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
             }
         }
         catch (Exception ex)
@@ -453,7 +460,9 @@ public partial class MainWindow : Window
         ExcludeVendorCssCheckBox.IsEnabled = !isScanning;
         ViewModeSelectorsRadio.IsEnabled = !isScanning;
         ViewModeCssFilesRadio.IsEnabled = !isScanning;
-        ScanProjectButton.Content = isScanning ? "Scanning..." : "Scan Project";
+        ScanProjectButton.Content = isScanning
+                                  ? "Scanning..."
+                                  : (_lastScanResult != null ? "Rescan Project" : "Scan Project");
     }
 
     private ScanOptions BuildScanOptions()
