@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO.Enumeration;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using TrimCSS.Contracts;
 using TrimCSS.Models;
@@ -327,6 +328,39 @@ public class ProjectScanner : ICssScanner
         var normalizedRoot = Path.GetFullPath(rootPath);
         var cssFileMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var cssFilesByBasename = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var resolvableCssFiles = new List<string>(cssFiles);
+        var generatedToSourceCss = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
+        void RegisterGeneratedMapping(string generatedFullPath, string sourceFullPath)
+        {
+            if (!generatedToSourceCss.TryGetValue(generatedFullPath, out var sources))
+            {
+                sources = [];
+                generatedToSourceCss[generatedFullPath] = sources;
+            }
+            if (!sources.Contains(sourceFullPath, StringComparer.OrdinalIgnoreCase))
+            {
+                sources.Add(sourceFullPath);
+            }
+
+            cssFileMap[generatedFullPath] = generatedFullPath;
+
+            string fileName = Path.GetFileName(generatedFullPath);
+            if (!cssFilesByBasename.TryGetValue(fileName, out var bList))
+            {
+                bList = [];
+                cssFilesByBasename[fileName] = bList;
+            }
+            if (!bList.Contains(generatedFullPath, StringComparer.OrdinalIgnoreCase))
+            {
+                bList.Add(generatedFullPath);
+            }
+
+            if (!resolvableCssFiles.Contains(generatedFullPath, StringComparer.OrdinalIgnoreCase))
+            {
+                resolvableCssFiles.Add(generatedFullPath);
+            }
+        }
 
         foreach (var file in cssFiles)
         {
@@ -340,6 +374,113 @@ public class ProjectScanner : ICssScanner
                 cssFilesByBasename[fileName] = list;
             }
             list.Add(full);
+        }
+
+        // 1-to-1 .min.css counterpart mapping
+        foreach (var file in cssFiles)
+        {
+            string fullCssPath = Path.GetFullPath(file);
+            if (!fullCssPath.EndsWith(".min.css", StringComparison.OrdinalIgnoreCase))
+            {
+                string minFullPath = Path.ChangeExtension(fullCssPath, ".min.css");
+                if (!string.Equals(minFullPath, fullCssPath, StringComparison.OrdinalIgnoreCase) && File.Exists(minFullPath))
+                {
+                    RegisterGeneratedMapping(minFullPath, fullCssPath);
+                }
+            }
+        }
+
+        // bundleconfig.json multi-file bundle mapping
+        string bundleConfigPath = Path.Combine(rootPath, "bundleconfig.json");
+        if (File.Exists(bundleConfigPath))
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(bundleConfigPath);
+                var docOptions = new JsonDocumentOptions
+                {
+                    CommentHandling = JsonCommentHandling.Skip,
+                    AllowTrailingCommas = true
+                };
+
+                using var doc = JsonDocument.Parse(jsonContent, docOptions);
+                if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var element in doc.RootElement.EnumerateArray())
+                    {
+                        if (element.ValueKind != JsonValueKind.Object)
+                        {
+                            continue;
+                        }
+
+                        string? outputFileName = null;
+                        JsonElement inputFilesElement = default;
+                        bool hasInputFiles = false;
+
+                        foreach (var prop in element.EnumerateObject())
+                        {
+                            if (string.Equals(prop.Name, "outputFileName", StringComparison.OrdinalIgnoreCase) &&
+                                prop.Value.ValueKind == JsonValueKind.String)
+                            {
+                                outputFileName = prop.Value.GetString();
+                            }
+                            else if (string.Equals(prop.Name, "inputFiles", StringComparison.OrdinalIgnoreCase) &&
+                                     prop.Value.ValueKind == JsonValueKind.Array)
+                            {
+                                inputFilesElement = prop.Value;
+                                hasInputFiles = true;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(outputFileName) &&
+                            outputFileName.EndsWith(".css", StringComparison.OrdinalIgnoreCase) &&
+                            hasInputFiles)
+                        {
+                            string cleanOutput = outputFileName.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/');
+                            string outputFullPath = Path.GetFullPath(Path.Combine(rootPath, cleanOutput));
+
+                            foreach (var inputItem in inputFilesElement.EnumerateArray())
+                            {
+                                if (inputItem.ValueKind == JsonValueKind.String)
+                                {
+                                    string? inputFileName = inputItem.GetString();
+                                    if (!string.IsNullOrWhiteSpace(inputFileName) &&
+                                        inputFileName.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        string cleanInput = inputFileName.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/');
+                                        string inputFullPath = Path.GetFullPath(Path.Combine(rootPath, cleanInput));
+                                        if (!cssFileMap.ContainsKey(inputFullPath))
+                                        {
+                                            string wwwrootCandidate = Path.GetFullPath(Path.Combine(rootPath, "wwwroot", cleanInput));
+                                            if (cssFileMap.ContainsKey(wwwrootCandidate))
+                                            {
+                                                inputFullPath = wwwrootCandidate;
+                                            }
+                                            else
+                                            {
+                                                string publicCandidate = Path.GetFullPath(Path.Combine(rootPath, "public", cleanInput));
+                                                if (cssFileMap.ContainsKey(publicCandidate))
+                                                {
+                                                    inputFullPath = publicCandidate;
+                                                }
+                                            }
+                                        }
+
+                                        if (cssFileMap.ContainsKey(inputFullPath))
+                                        {
+                                            RegisterGeneratedMapping(outputFullPath, inputFullPath);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Safely ignore malformed bundleconfig.json so scan never breaks
+            }
         }
 
         var referencedFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -363,11 +504,11 @@ public class ProjectScanner : ICssScanner
         {
             if (refItem.Kind == StylesheetReferenceKind.Glob)
             {
-                ResolveGlobReference(refItem, normalizedRoot, cssFiles, referencedFiles);
+                ResolveGlobReference(refItem, normalizedRoot, resolvableCssFiles, referencedFiles);
             }
             else if (refItem.Kind == StylesheetReferenceKind.Dynamic)
             {
-                ResolveDynamicReference(refItem, normalizedRoot, cssFiles, MarkAmbiguous);
+                ResolveDynamicReference(refItem, normalizedRoot, resolvableCssFiles, MarkAmbiguous);
             }
             else // Exact
             {
@@ -394,11 +535,23 @@ public class ProjectScanner : ICssScanner
             importGraph[importerFull] = targets;
         }
 
-        // 3. Transitive propagation of Referenced status
+        // 3. Transitive propagation of Referenced status (following generated mappings & @imports)
         var queue = new Queue<string>(referencedFiles);
         while (queue.Count > 0)
         {
             string current = queue.Dequeue();
+
+            if (generatedToSourceCss.TryGetValue(current, out var sources))
+            {
+                foreach (string source in sources)
+                {
+                    if (referencedFiles.Add(source))
+                    {
+                        queue.Enqueue(source);
+                    }
+                }
+            }
+
             if (importGraph.TryGetValue(current, out var targets))
             {
                 foreach (string target in targets)
@@ -418,15 +571,38 @@ public class ProjectScanner : ICssScanner
             string current = ambQueue.Dequeue();
             if (referencedFiles.Contains(current)) continue;
 
+            if (ambiguousMap.TryGetValue(current, out var currentMatches))
+            {
+                if (generatedToSourceCss.TryGetValue(current, out var sources))
+                {
+                    foreach (string source in sources)
+                    {
+                        if (!referencedFiles.Contains(source))
+                        {
+                            bool isNew = !ambiguousMap.ContainsKey(source);
+                            foreach (var match in currentMatches)
+                            {
+                                MarkAmbiguous(source, match);
+                            }
+                            if (isNew)
+                            {
+                                ambQueue.Enqueue(source);
+                            }
+                        }
+                    }
+                }
+            }
+
             if (importGraph.TryGetValue(current, out var targets))
             {
                 foreach (string target in targets)
                 {
                     if (!referencedFiles.Contains(target))
                     {
-                        if (!ambiguousMap.ContainsKey(target))
+                        bool isNew = !ambiguousMap.ContainsKey(target);
+                        MarkAmbiguous(target, current);
+                        if (isNew)
                         {
-                            ambiguousMap[target] = [current];
                             ambQueue.Enqueue(target);
                         }
                     }

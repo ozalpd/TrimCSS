@@ -352,4 +352,138 @@ public class CssFileReferenceTests : IDisposable
         Assert.Contains(refs, r => r.ReferencePath == "styles/header.css" && r.Kind == StylesheetReferenceKind.Exact);
         Assert.Contains(refs, r => r.Kind == StylesheetReferenceKind.Dynamic);
     }
+
+    [Fact]
+    public async Task ScanProjectAsync_MinifiedCounterpartReferenced_MarksSourceCssAsReferenced()
+    {
+        // Arrange
+        var contentDir = Path.Combine(_testRoot, "Content");
+        Directory.CreateDirectory(contentDir);
+        await File.WriteAllTextAsync(Path.Combine(contentDir, "Site.css"), ".body-content { padding: 15px; }");
+        await File.WriteAllTextAsync(Path.Combine(contentDir, "Site.min.css"), ".body-content{padding:15px}");
+
+        var viewsDir = Path.Combine(_testRoot, "Views", "Shared");
+        Directory.CreateDirectory(viewsDir);
+        await File.WriteAllTextAsync(Path.Combine(viewsDir, "_Layout.cshtml"), @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <link rel=""stylesheet"" href=""~/Content/Site.min.css?v=1"" />
+            </head>
+            <body>
+                <div class=""body-content"">Hello</div>
+            </body>
+            </html>
+        ");
+
+        // Act - uses default ScanOptions where *.min.css is excluded
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(1, result.TotalCssFiles);
+        Assert.Empty(result.UnusedCssFiles);
+        Assert.Empty(result.AmbiguousCssFiles);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_MinifiedCounterpartExistsOnDiskButUnreferenced_KeepsSourceCssUnused()
+    {
+        // Arrange
+        var contentDir = Path.Combine(_testRoot, "Content");
+        Directory.CreateDirectory(contentDir);
+        await File.WriteAllTextAsync(Path.Combine(contentDir, "orphan.css"), ".orphan-class { color: red; }");
+        await File.WriteAllTextAsync(Path.Combine(contentDir, "orphan.min.css"), ".orphan-class{color:red}");
+
+        // Act - neither is referenced
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(1, result.TotalCssFiles);
+        Assert.Single(result.UnusedCssFiles);
+        Assert.Equal("Content/orphan.css", result.UnusedCssFiles[0].RelativePath);
+        Assert.Equal(CssFileReferenceStatus.Unused, result.UnusedCssFiles[0].Status);
+        Assert.Empty(result.AmbiguousCssFiles);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_MinifiedCounterpartImportsPartial_PropagatesReferencedTransitively()
+    {
+        // Arrange
+        var cssDir = Path.Combine(_testRoot, "css");
+        var partialsDir = Path.Combine(cssDir, "partials");
+        Directory.CreateDirectory(partialsDir);
+
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "main.css"), @"
+            @import ""partials/tokens.css"";
+            .main-theme { font-size: 14px; }
+        ");
+        await File.WriteAllTextAsync(Path.Combine(partialsDir, "tokens.css"), ":root { --brand: #7c5cfc; }");
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "main.min.css"), ".main-theme{font-size:14px}");
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "index.html"), @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <link rel=""stylesheet"" href=""css/main.min.css"" />
+            </head>
+            <body>
+                <div class=""main-theme"">Content</div>
+            </body>
+            </html>
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(2, result.TotalCssFiles);
+        Assert.Empty(result.UnusedCssFiles);
+        Assert.Empty(result.AmbiguousCssFiles);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_BundleConfigJson_MarksInputCssFilesReferencedWhenOutputReferenced()
+    {
+        // Arrange
+        var cssDir = Path.Combine(_testRoot, "css");
+        Directory.CreateDirectory(cssDir);
+
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "part1.css"), ".p1 { color: red; }");
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "part2.css"), ".p2 { color: blue; }");
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "dead.css"), ".dead { color: gray; }");
+
+        // bundleconfig.json mapping part1.css and part2.css to site.bundle.min.css
+        string bundleConfig = @"[
+            {
+                ""outputFileName"": ""css/site.bundle.min.css"",
+                ""inputFiles"": [
+                    ""css/part1.css"",
+                    ""css/part2.css""
+                ]
+            }
+        ]";
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "bundleconfig.json"), bundleConfig);
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "index.html"), @"
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <link rel=""stylesheet"" href=""css/site.bundle.min.css"" />
+            </head>
+            <body>
+                <div class=""p1"">Part 1</div>
+            </body>
+            </html>
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(3, result.TotalCssFiles);
+        Assert.Single(result.UnusedCssFiles);
+        Assert.Equal("css/dead.css", result.UnusedCssFiles[0].RelativePath);
+        Assert.Equal(CssFileReferenceStatus.Unused, result.UnusedCssFiles[0].Status);
+        Assert.Empty(result.AmbiguousCssFiles);
+    }
 }
