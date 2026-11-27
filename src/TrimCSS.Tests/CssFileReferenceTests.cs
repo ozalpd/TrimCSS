@@ -486,4 +486,257 @@ public class CssFileReferenceTests : IDisposable
         Assert.Equal(CssFileReferenceStatus.Unused, result.UnusedCssFiles[0].Status);
         Assert.Empty(result.AmbiguousCssFiles);
     }
+
+    [Fact]
+    public async Task ScanProjectAsync_CalculatesSelectorUsageRatePerCssFile()
+    {
+        // Arrange
+        var cssDir = Path.Combine(_testRoot, "css");
+        var themesDir = Path.Combine(_testRoot, "themes");
+        Directory.CreateDirectory(cssDir);
+        Directory.CreateDirectory(themesDir);
+
+        // main.css: 2 used, 1 unused, 1 ambiguous -> 4 total, 50% usage
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "main.css"), @"
+            .used-one { color: black; }
+            .used-two { color: white; }
+            .unused-one { color: gray; }
+            .alert-danger { color: red; }
+        ");
+
+        // empty.css: 0 selectors -> 0% usage (no NaN)
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "empty.css"), "/* empty */");
+
+        // orphan.css: 2 unused selectors -> 0% usage
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "orphan.css"), @"
+            .dead-a { display: none; }
+            .dead-b { display: none; }
+        ");
+
+        // themes/dark.css: matched ambiguously via JS template literal, 1 used selector -> 100% usage
+        await File.WriteAllTextAsync(Path.Combine(themesDir, "dark.css"), ".theme-bg { background: #111; }");
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "index.html"), @"
+            <link rel=""stylesheet"" href=""css/main.css"" />
+            <link rel=""stylesheet"" href=""css/empty.css"" />
+            <div class=""used-one used-two theme-bg""></div>
+        ");
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "app.js"), @"
+            const cls = `alert-${type}`;
+            const themePath = `/themes/${name}.css`;
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(4, result.TotalCssFiles);
+        Assert.Equal(4, result.AllCssFiles.Count);
+
+        var mainFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "css/main.css");
+        Assert.Equal(CssFileReferenceStatus.Referenced, mainFile.Status);
+        Assert.Equal(4, mainFile.TotalSelectors);
+        Assert.Equal(4, mainFile.SelectorCount);
+        Assert.Equal(2, mainFile.UsedSelectors);
+        Assert.Equal(1, mainFile.UnusedSelectors);
+        Assert.Equal(1, mainFile.AmbiguousSelectors);
+        Assert.Equal(50.0, mainFile.UsagePercentage, precision: 2);
+
+        var emptyFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "css/empty.css");
+        Assert.Equal(CssFileReferenceStatus.Referenced, emptyFile.Status);
+        Assert.Equal(0, emptyFile.TotalSelectors);
+        Assert.Equal(0, emptyFile.UsedSelectors);
+        Assert.Equal(0, emptyFile.UnusedSelectors);
+        Assert.Equal(0.0, emptyFile.UsagePercentage);
+
+        var orphanFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "css/orphan.css");
+        Assert.Equal(CssFileReferenceStatus.Unused, orphanFile.Status);
+        Assert.Equal(2, orphanFile.TotalSelectors);
+        Assert.Equal(0, orphanFile.UsedSelectors);
+        Assert.Equal(2, orphanFile.UnusedSelectors);
+        Assert.Equal(0.0, orphanFile.UsagePercentage);
+
+        var darkFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "themes/dark.css");
+        Assert.Equal(CssFileReferenceStatus.Ambiguous, darkFile.Status);
+        Assert.Equal(1, darkFile.TotalSelectors);
+        Assert.Equal(1, darkFile.UsedSelectors);
+        Assert.Equal(0, darkFile.UnusedSelectors);
+        Assert.Equal(100.0, darkFile.UsagePercentage, precision: 2);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_PureElementSelectors_CountAsUsedInFileUsageRate()
+    {
+        // Arrange
+        var cssDir = Path.Combine(_testRoot, "css");
+        Directory.CreateDirectory(cssDir);
+        await File.WriteAllTextAsync(Path.Combine(cssDir, "reset.css"), @"
+            body { margin: 0; }
+            h1 { font-size: 2rem; }
+        ");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "index.html"), @"
+            <link rel=""stylesheet"" href=""css/reset.css"" />
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        var resetFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "css/reset.css");
+        Assert.Equal(CssFileReferenceStatus.Referenced, resetFile.Status);
+        Assert.Equal(2, resetFile.TotalSelectors);
+        Assert.Equal(2, resetFile.UsedSelectors);
+        Assert.Equal(0, resetFile.UnusedSelectors);
+        Assert.Equal(100.0, resetFile.UsagePercentage, precision: 2);
+    }
+
+    [Fact]
+    public void UnusedCssFileInfo_UsagePercentage_HandlesZeroAndFractionalCounts()
+    {
+        var emptyInfo = new UnusedCssFileInfo { TotalSelectors = 0, UsedSelectors = 0 };
+        Assert.Equal(0.0, emptyInfo.UsagePercentage);
+
+        var partialInfo = new UnusedCssFileInfo { TotalSelectors = 3, UsedSelectors = 1 };
+        Assert.Equal(100.0 / 3.0, partialInfo.UsagePercentage, precision: 5);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_MvcBundleConfigCs_MarksBundledAndImportedCssAsReferenced()
+    {
+        // Arrange
+        var appStartDir = Path.Combine(_testRoot, "App_Start");
+        var baseThemeDir = Path.Combine(_testRoot, "Content", "themes", "base");
+        var viewsDir = Path.Combine(_testRoot, "Views", "Shared");
+        Directory.CreateDirectory(appStartDir);
+        Directory.CreateDirectory(baseThemeDir);
+        Directory.CreateDirectory(viewsDir);
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "bootstrap.css"), ".btn { display: inline-block; }");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "site.css"), ".site { padding: 8px; }");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "dead.css"), ".dead { color: gray; }");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "unrendered.css"), ".unrendered { color: red; }");
+
+        await File.WriteAllTextAsync(Path.Combine(baseThemeDir, "all.css"), "@import \"base.css\";");
+        await File.WriteAllTextAsync(Path.Combine(baseThemeDir, "base.css"), "@import \"core.css\";");
+        await File.WriteAllTextAsync(Path.Combine(baseThemeDir, "core.css"), ".ui-widget { font-size: 1em; }");
+
+        await File.WriteAllTextAsync(Path.Combine(appStartDir, "BundleConfig.cs"), @"
+            using System.Web.Optimization;
+
+            public class BundleConfig
+            {
+                public static void RegisterBundles(BundleCollection bundles)
+                {
+                    bundles.Add(new StyleBundle(""~/Content/css"").Include(
+                              ""~/Content/bootstrap.css"",
+                              ""~/Content/site.css"")
+                              .Include(""~/Content/themes/base/all.css"", new CssRewriteUrlTransform()));
+
+                    bundles.Add(new StyleBundle(""~/Content/unused-bundle"").Include(
+                              ""~/Content/unrendered.css""));
+
+                    // Commented-out bundle must stay Unused:
+                    // bundles.Add(new StyleBundle(""~/Content/dead"").Include(""~/Content/dead.css""));
+                }
+            }
+        ");
+
+        await File.WriteAllTextAsync(Path.Combine(viewsDir, "_Layout.cshtml"), @"
+            <html>
+            <head>
+                @Styles.Render(""~/Content/css"")
+            </head>
+            <body><div class=""btn site ui-widget"">Hi</div></body>
+            </html>
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(7, result.TotalCssFiles);
+        Assert.Equal(2, result.UnusedCssFiles.Count);
+        Assert.Contains(result.UnusedCssFiles, f => f.RelativePath == "Content/dead.css");
+        Assert.Contains(result.UnusedCssFiles, f => f.RelativePath == "Content/unrendered.css");
+
+        Assert.Equal(CssFileReferenceStatus.Referenced, Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/bootstrap.css").Status);
+        Assert.Equal(CssFileReferenceStatus.Referenced, Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/site.css").Status);
+        Assert.Equal(CssFileReferenceStatus.Referenced, Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/all.css").Status);
+        Assert.Equal(CssFileReferenceStatus.Referenced, Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/base.css").Status);
+        Assert.Equal(CssFileReferenceStatus.Referenced, Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/core.css").Status);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_MvcBundleConfigCs_SupportsIncludeDirectoryVersionWildcardAndVariables()
+    {
+        // Arrange
+        var appStartDir = Path.Combine(_testRoot, "App_Start");
+        var themeSubDir = Path.Combine(_testRoot, "Content", "theme", "sub");
+        var viewsDir = Path.Combine(_testRoot, "Views");
+        Directory.CreateDirectory(appStartDir);
+        Directory.CreateDirectory(themeSubDir);
+        Directory.CreateDirectory(viewsDir);
+
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "jquery-ui-1.13.2.css"), ".ui-slider { display: block; }");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "theme", "theme-root.css"), ".theme-root { color: black; }");
+        await File.WriteAllTextAsync(Path.Combine(themeSubDir, "theme-nested.css"), ".theme-nested { color: white; }");
+        await File.WriteAllTextAsync(Path.Combine(_testRoot, "Content", "orphan.css"), ".orphan { display: none; }");
+
+        await File.WriteAllTextAsync(Path.Combine(appStartDir, "BundleConfig.cs"), @"
+            public class BundleConfig
+            {
+                public static void RegisterBundles(BundleCollection bundles)
+                {
+                    var themeBundle = new StyleBundle(""~/Content/themecss"");
+                    themeBundle.Include(""~/Content/jquery-ui-{version}.css"");
+                    themeBundle.IncludeDirectory(""~/Content/theme"", ""*.css"", true);
+                    bundles.Add(themeBundle);
+                }
+            }
+        ");
+
+        await File.WriteAllTextAsync(Path.Combine(viewsDir, "Index.cshtml"), @"
+            @Styles.RenderFormat(""<link href=\""{0}\"" rel=\""stylesheet\"" />"", ""~/Content/themecss"")
+        ");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        Assert.Equal(4, result.TotalCssFiles);
+        var unused = Assert.Single(result.UnusedCssFiles);
+        Assert.Equal("Content/orphan.css", unused.RelativePath);
+    }
+
+    [Fact]
+    public async Task ScanProjectAsync_PopulatesImportedCssFilesForEachCssFile()
+    {
+        // Arrange
+        var baseDir = Path.Combine(_testRoot, "Content", "themes", "base");
+        Directory.CreateDirectory(baseDir);
+
+        await File.WriteAllTextAsync(Path.Combine(baseDir, "all.css"), @"
+            @import ""base.css"";
+            @import url(""accordion.css"");
+        ");
+        await File.WriteAllTextAsync(Path.Combine(baseDir, "base.css"), @"
+            @import ""core.css"";
+        ");
+        await File.WriteAllTextAsync(Path.Combine(baseDir, "accordion.css"), ".ui-accordion { display: block; }");
+        await File.WriteAllTextAsync(Path.Combine(baseDir, "core.css"), ".ui-helper { margin: 0; }");
+
+        // Act
+        var result = await _scanner.ScanProjectAsync(_testRoot);
+
+        // Assert
+        var allFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/all.css");
+        Assert.Equal(["Content/themes/base/base.css", "Content/themes/base/accordion.css"], allFile.ImportedCssFiles);
+
+        var baseFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/base.css");
+        Assert.Equal(["Content/themes/base/core.css"], baseFile.ImportedCssFiles);
+
+        var coreFile = Assert.Single(result.AllCssFiles, f => f.RelativePath == "Content/themes/base/core.css");
+        Assert.Empty(coreFile.ImportedCssFiles);
+    }
 }

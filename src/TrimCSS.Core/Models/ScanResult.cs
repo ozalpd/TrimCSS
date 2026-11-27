@@ -26,6 +26,11 @@ public class ScanResult
     public int TotalCssFiles { get; set; }
 
     /// <summary>
+    /// Gets or sets audit information and selector usage metrics for all scanned CSS stylesheet files.
+    /// </summary>
+    public List<UnusedCssFileInfo> AllCssFiles { get; set; } = [];
+
+    /// <summary>
     /// Gets or sets the list of CSS stylesheet files confirmed to have no references in any scanned project files.
     /// </summary>
     public List<UnusedCssFileInfo> UnusedCssFiles { get; set; } = [];

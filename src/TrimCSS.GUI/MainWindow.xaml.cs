@@ -161,7 +161,8 @@ public partial class MainWindow : Window
         try
         {
             string ext = Path.GetExtension(dialog.FileName);
-            string activeStatus = FilterUnusedRadio.IsChecked == true ? "Unused Only"
+            string activeStatus = FilterAllFilesRadio.IsChecked == true ? "All Files"
+                : FilterUnusedRadio.IsChecked == true ? (isCssFilesMode ? "Not Referenced" : "Unused Only")
                 : FilterAmbiguousRadio.IsChecked == true ? "Ambiguous Only"
                 : "All Flagged";
 
@@ -246,18 +247,13 @@ public partial class MainWindow : Window
         ResultsGrid.ItemsSource = _itemsView;
 
         // 2. Bind CSS Files
-        var combinedCssFiles = new List<CssFileRowItem>(
-            result.UnusedCssFiles.Count + result.AmbiguousCssFiles.Count);
+        IEnumerable<UnusedCssFileInfo> cssFileSource = result.AllCssFiles.Count > 0
+            ? result.AllCssFiles
+            : result.UnusedCssFiles.Concat(result.AmbiguousCssFiles);
 
-        foreach (var file in result.UnusedCssFiles)
-        {
-            combinedCssFiles.Add(new CssFileRowItem(file));
-        }
-
-        foreach (var file in result.AmbiguousCssFiles)
-        {
-            combinedCssFiles.Add(new CssFileRowItem(file));
-        }
+        var combinedCssFiles = cssFileSource
+            .Select(file => new CssFileRowItem(file))
+            .ToList();
 
         _allCssFiles = combinedCssFiles;
         _cssFilesView = CollectionViewSource.GetDefaultView(_allCssFiles);
@@ -265,8 +261,7 @@ public partial class MainWindow : Window
         CssFilesGrid.ItemsSource = _cssFilesView;
 
         // Update tab header badge
-        int flaggedFiles = _allCssFiles.Count;
-        ViewModeCssFilesRadio.Content = flaggedFiles > 0 ? $"CSS Files ({flaggedFiles})" : "CSS Files";
+        ViewModeCssFilesRadio.Content = result.TotalCssFiles > 0 ? $"CSS Files ({result.TotalCssFiles})" : "CSS Files";
 
         RefreshViewState();
     }
@@ -319,14 +314,22 @@ public partial class MainWindow : Window
             return false;
         }
 
-        if (FilterUnusedRadio.IsChecked == true && !item.IsUnused)
+        if (FilterAllFilesRadio.IsChecked != true)
         {
-            return false;
-        }
+            if (FilterUnusedRadio.IsChecked == true && !item.IsUnused)
+            {
+                return false;
+            }
 
-        if (FilterAmbiguousRadio.IsChecked == true && item.IsUnused)
-        {
-            return false;
+            if (FilterAmbiguousRadio.IsChecked == true && !item.IsAmbiguous)
+            {
+                return false;
+            }
+
+            if (FilterAllRadio.IsChecked == true && item.IsReferenced)
+            {
+                return false;
+            }
         }
 
         string query = SearchBox.Text.Trim();
@@ -334,7 +337,9 @@ public partial class MainWindow : Window
         {
             bool matches =
                 item.RelativePath.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                item.Details.Contains(query, StringComparison.OrdinalIgnoreCase);
+                item.Details.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.ImportedFilesDisplay.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Status.Contains(query, StringComparison.OrdinalIgnoreCase);
 
             if (!matches)
             {
@@ -354,6 +359,14 @@ public partial class MainWindow : Window
 
         bool isCssFilesMode = ViewModeCssFilesRadio.IsChecked == true;
         FileFilterCombo.Visibility = isCssFilesMode ? Visibility.Collapsed : Visibility.Visible;
+        FilterAllFilesRadio.Visibility = isCssFilesMode ? Visibility.Visible : Visibility.Collapsed;
+        FilterUnusedRadio.Content = isCssFilesMode ? "Not Referenced" : "Unused Only";
+
+        if (!isCssFilesMode && FilterAllFilesRadio.IsChecked == true)
+        {
+            FilterAllRadio.IsChecked = true;
+            return;
+        }
 
         if (isCssFilesMode)
         {
@@ -377,9 +390,13 @@ public partial class MainWindow : Window
             {
                 CssFilesGrid.Visibility = Visibility.Collapsed;
                 EmptyStatePanel.Visibility = Visibility.Visible;
-                EmptyStateMessage.Text = _allCssFiles.Count == 0
-                    ? "No unused or ambiguous CSS files found — all stylesheets are referenced!"
-                    : "No CSS files match your current filter.";
+                bool hasAnyFiles = _allCssFiles.Count > 0;
+                bool hasFlaggedFiles = _allCssFiles.Any(f => !f.IsReferenced);
+                EmptyStateMessage.Text = hasAnyFiles && !hasFlaggedFiles && FilterAllFilesRadio.IsChecked != true
+                    ? "No unused or ambiguous CSS files found — switch to \"All Files\" to view usage rates for all stylesheets."
+                    : !hasAnyFiles
+                        ? "No unused or ambiguous CSS files found — all stylesheets are referenced!"
+                        : "No CSS files match your current filter.";
             }
             else
             {
@@ -524,7 +541,27 @@ public partial class MainWindow : Window
         return options;
     }
 
-    private void ViewModeChanged(object sender, RoutedEventArgs e) => RefreshViewState();
+    private void ViewModeChanged(object sender, RoutedEventArgs e)
+    {
+        if (!_isUiInitialized)
+        {
+            return;
+        }
+
+        if (ViewModeCssFilesRadio.IsChecked == true && FilterAllFilesRadio.IsChecked != true)
+        {
+            FilterAllFilesRadio.IsChecked = true;
+            return;
+        }
+
+        if (ViewModeSelectorsRadio.IsChecked == true && FilterAllFilesRadio.IsChecked == true)
+        {
+            FilterAllRadio.IsChecked = true;
+            return;
+        }
+
+        RefreshViewState();
+    }
 
     private void FilterChanged(object sender, RoutedEventArgs e) => RefreshViewState();
 
@@ -564,6 +601,11 @@ public partial class MainWindow : Window
     {
         ThemeService.ToggleTheme();
         UpdateThemeToggleButton();
+
+        foreach (var item in _allCssFiles)
+        {
+            item.NotifyThemeChanged();
+        }
     }
 
     private void UpdateThemeToggleButton()

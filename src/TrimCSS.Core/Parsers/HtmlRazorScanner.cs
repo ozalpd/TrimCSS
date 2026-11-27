@@ -374,13 +374,17 @@ public partial class HtmlRazorScanner : ISourceScanner
             }
         }
 
-        // 3. Razor bundle & path helpers: @Styles.Render(...)
+        // 3. Razor bundle & path helpers: @Styles.Render(...) and @Styles.RenderFormat(...)
         foreach (Match match in StylesRenderRegex().Matches(content))
         {
             string args = match.Groups[1].Value;
             foreach (Match strMatch in CSharpStringLiteralRegex().Matches(args))
             {
                 string raw = strMatch.Value.Trim('"', '@');
+                if (raw.Contains('<') || raw.Contains("{0}", StringComparison.Ordinal))
+                {
+                    continue;
+                }
                 AddRef(raw, StylesheetReferenceKind.Exact);
             }
         }
@@ -452,7 +456,7 @@ public partial class HtmlRazorScanner : ISourceScanner
     [GeneratedRegex(@"href\s*=\s*(?:""([^""]*)""|'([^']*)')", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex HrefAttributeRegex();
 
-    [GeneratedRegex(@"@Styles\.Render\s*\(([^)]+)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
+    [GeneratedRegex(@"@Styles\.Render(?:Format)?\s*\(([^)]+)\)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex StylesRenderRegex();
 
     [GeneratedRegex(@"Url\.Content\s*\(\s*[""']([^""']+)[""']\s*\)", RegexOptions.IgnoreCase | RegexOptions.Compiled)]

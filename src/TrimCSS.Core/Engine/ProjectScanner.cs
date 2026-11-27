@@ -63,9 +63,13 @@ public class ProjectScanner : ICssScanner
         var allFiles = DiscoverProjectFiles(rootPath, excludedFolders, excludedFilePatterns);
         cancellationToken.ThrowIfCancellationRequested();
 
-        // 2. Separate CSS files from source markup/script files
+        // 2. Separate CSS files, BundleConfig.cs, and source markup/script files
         var cssFiles = allFiles
             .Where(f => f.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var bundleConfigCsFiles = allFiles
+            .Where(f => Path.GetFileName(f).Equals("BundleConfig.cs", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var sourceFiles = allFiles
@@ -144,12 +148,19 @@ public class ProjectScanner : ICssScanner
         // 5. Match and classify selectors
         var unusedSelectors = new List<CssSelectorInfo>();
         var ambiguousSelectors = new List<CssSelectorInfo>();
+        var selectorStatsByFile = new Dictionary<string, (int Total, int Used, int Unused, int Ambiguous)>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var selector in allSelectors)
         {
+            string fullFile = Path.GetFullPath(selector.FilePath);
+            selectorStatsByFile.TryGetValue(fullFile, out var stats);
+            stats.Total++;
+
             // Skip selectors without class targets (e.g. pure ID or tag selectors like `h1`, `#header`)
             if (selector.TargetClasses.Count == 0)
             {
+                stats.Used++;
+                selectorStatsByFile[fullFile] = stats;
                 continue;
             }
 
@@ -158,6 +169,8 @@ public class ProjectScanner : ICssScanner
             if (allExactMatches)
             {
                 // Definitively used: all classes exist in the exact token set
+                stats.Used++;
+                selectorStatsByFile[fullFile] = stats;
                 continue;
             }
 
@@ -168,20 +181,25 @@ public class ProjectScanner : ICssScanner
             if (!hasAnyMatch)
             {
                 // Definitively unused: none of the target classes match any exact token or dynamic pattern
+                stats.Unused++;
                 unusedSelectors.Add(selector);
             }
             else
             {
                 // Ambiguous: some classes match exact or dynamic pattern, but not all are exact matches
+                stats.Ambiguous++;
                 ambiguousSelectors.Add(selector);
             }
+
+            selectorStatsByFile[fullFile] = stats;
         }
 
         // 6. Match and classify CSS files
-        var (unusedCssFiles, ambiguousCssFiles) = ClassifyCssFiles(
+        var (allCssFiles, unusedCssFiles, ambiguousCssFiles) = ClassifyCssFiles(
             rootPath,
             cssFiles,
-            allSelectors,
+            bundleConfigCsFiles,
+            selectorStatsByFile,
             allStylesheetReferences,
             cssImports);
 
@@ -193,6 +211,7 @@ public class ProjectScanner : ICssScanner
             UnusedSelectors = unusedSelectors,
             AmbiguousSelectors = ambiguousSelectors,
             TotalCssFiles = cssFiles.Count,
+            AllCssFiles = allCssFiles,
             UnusedCssFiles = unusedCssFiles,
             AmbiguousCssFiles = ambiguousCssFiles,
             ScannedFilesCount = cssFiles.Count + scannedSourceFileCount,
@@ -318,10 +337,11 @@ public class ProjectScanner : ICssScanner
                targetClass.EndsWith(pattern, StringComparison.Ordinal);
     }
 
-    private static (List<UnusedCssFileInfo> Unused, List<UnusedCssFileInfo> Ambiguous) ClassifyCssFiles(
+    private static (List<UnusedCssFileInfo> All, List<UnusedCssFileInfo> Unused, List<UnusedCssFileInfo> Ambiguous) ClassifyCssFiles(
         string rootPath,
         IReadOnlyList<string> cssFiles,
-        IReadOnlyList<CssSelectorInfo> allSelectors,
+        IReadOnlyList<string> bundleConfigCsFiles,
+        IReadOnlyDictionary<string, (int Total, int Used, int Unused, int Ambiguous)> selectorStatsByFile,
         IReadOnlyList<StylesheetReference> references,
         Dictionary<string, List<StylesheetReference>> cssImports)
     {
@@ -331,35 +351,61 @@ public class ProjectScanner : ICssScanner
         var resolvableCssFiles = new List<string>(cssFiles);
         var generatedToSourceCss = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        void RegisterGeneratedMapping(string generatedFullPath, string sourceFullPath)
+        void RegisterVirtualBundleMapping(string virtualFullPath, string targetFullPath)
         {
-            if (!generatedToSourceCss.TryGetValue(generatedFullPath, out var sources))
+            if (!generatedToSourceCss.TryGetValue(virtualFullPath, out var sources))
             {
                 sources = [];
-                generatedToSourceCss[generatedFullPath] = sources;
+                generatedToSourceCss[virtualFullPath] = sources;
             }
-            if (!sources.Contains(sourceFullPath, StringComparer.OrdinalIgnoreCase))
+            if (!sources.Contains(targetFullPath, StringComparer.OrdinalIgnoreCase))
             {
-                sources.Add(sourceFullPath);
+                sources.Add(targetFullPath);
             }
 
-            cssFileMap[generatedFullPath] = generatedFullPath;
+            cssFileMap[virtualFullPath] = virtualFullPath;
 
-            string fileName = Path.GetFileName(generatedFullPath);
-            if (!cssFilesByBasename.TryGetValue(fileName, out var bList))
+            if (virtualFullPath.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
             {
-                bList = [];
-                cssFilesByBasename[fileName] = bList;
+                string fileName = Path.GetFileName(virtualFullPath);
+                if (!cssFilesByBasename.TryGetValue(fileName, out var bList))
+                {
+                    bList = [];
+                    cssFilesByBasename[fileName] = bList;
+                }
+                if (!Enumerable.Contains(bList, virtualFullPath, StringComparer.OrdinalIgnoreCase))
+                {
+                    bList.Add(virtualFullPath);
+                }
+
+                if (!Enumerable.Contains(resolvableCssFiles, virtualFullPath, StringComparer.OrdinalIgnoreCase))
+                {
+                    resolvableCssFiles.Add(virtualFullPath);
+                }
             }
-            if (!bList.Contains(generatedFullPath, StringComparer.OrdinalIgnoreCase))
+        }
+
+        string? ResolveKnownCssPath(string cleanInput)
+        {
+            string candidate = Path.GetFullPath(Path.Combine(rootPath, cleanInput));
+            if (cssFileMap.ContainsKey(candidate))
             {
-                bList.Add(generatedFullPath);
+                return candidate;
             }
 
-            if (!resolvableCssFiles.Contains(generatedFullPath, StringComparer.OrdinalIgnoreCase))
+            string wwwrootCandidate = Path.GetFullPath(Path.Combine(rootPath, "wwwroot", cleanInput));
+            if (cssFileMap.ContainsKey(wwwrootCandidate))
             {
-                resolvableCssFiles.Add(generatedFullPath);
+                return wwwrootCandidate;
             }
+
+            string publicCandidate = Path.GetFullPath(Path.Combine(rootPath, "public", cleanInput));
+            if (cssFileMap.ContainsKey(publicCandidate))
+            {
+                return publicCandidate;
+            }
+
+            return null;
         }
 
         foreach (var file in cssFiles)
@@ -385,7 +431,7 @@ public class ProjectScanner : ICssScanner
                 string minFullPath = Path.ChangeExtension(fullCssPath, ".min.css");
                 if (!string.Equals(minFullPath, fullCssPath, StringComparison.OrdinalIgnoreCase) && File.Exists(minFullPath))
                 {
-                    RegisterGeneratedMapping(minFullPath, fullCssPath);
+                    RegisterVirtualBundleMapping(minFullPath, fullCssPath);
                 }
             }
         }
@@ -448,27 +494,10 @@ public class ProjectScanner : ICssScanner
                                         inputFileName.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
                                     {
                                         string cleanInput = inputFileName.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/');
-                                        string inputFullPath = Path.GetFullPath(Path.Combine(rootPath, cleanInput));
-                                        if (!cssFileMap.ContainsKey(inputFullPath))
+                                        string? resolvedInput = ResolveKnownCssPath(cleanInput);
+                                        if (resolvedInput != null)
                                         {
-                                            string wwwrootCandidate = Path.GetFullPath(Path.Combine(rootPath, "wwwroot", cleanInput));
-                                            if (cssFileMap.ContainsKey(wwwrootCandidate))
-                                            {
-                                                inputFullPath = wwwrootCandidate;
-                                            }
-                                            else
-                                            {
-                                                string publicCandidate = Path.GetFullPath(Path.Combine(rootPath, "public", cleanInput));
-                                                if (cssFileMap.ContainsKey(publicCandidate))
-                                                {
-                                                    inputFullPath = publicCandidate;
-                                                }
-                                            }
-                                        }
-
-                                        if (cssFileMap.ContainsKey(inputFullPath))
-                                        {
-                                            RegisterGeneratedMapping(outputFullPath, inputFullPath);
+                                            RegisterVirtualBundleMapping(outputFullPath, resolvedInput);
                                         }
                                     }
                                 }
@@ -480,6 +509,102 @@ public class ProjectScanner : ICssScanner
             catch
             {
                 // Safely ignore malformed bundleconfig.json so scan never breaks
+            }
+        }
+
+        // ASP.NET MVC BundleConfig.cs StyleBundle mapping
+        foreach (string bundleCsFile in bundleConfigCsFiles)
+        {
+            try
+            {
+                string csharpContent = File.ReadAllText(bundleCsFile);
+                var bundleDefinitions = BundleConfigParser.Parse(csharpContent);
+
+                foreach (var bundle in bundleDefinitions)
+                {
+                    string cleanVirtual = bundle.VirtualPath.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/');
+                    if (string.IsNullOrWhiteSpace(cleanVirtual))
+                    {
+                        continue;
+                    }
+
+                    string virtualFullPath = Path.GetFullPath(Path.Combine(rootPath, cleanVirtual));
+
+                    foreach (string includedPath in bundle.IncludedPaths)
+                    {
+                        string withWildcard = Regex.Replace(includedPath, @"\{version\}", "*", RegexOptions.IgnoreCase);
+                        string cleanInput = withWildcard.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/');
+
+                        if (cleanInput.Contains('*') || cleanInput.Contains('?'))
+                        {
+                            foreach (string cssPath in resolvableCssFiles)
+                            {
+                                string relRoot = Path.GetRelativePath(normalizedRoot, cssPath).Replace('\\', '/');
+                                string? relWwwroot = relRoot.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase) ? relRoot.Substring(8) : null;
+                                string? relPublic = relRoot.StartsWith("public/", StringComparison.OrdinalIgnoreCase) ? relRoot.Substring(7) : null;
+                                string fileName = Path.GetFileName(cssPath);
+
+                                bool matches = MatchesWildcard(cleanInput, relRoot) ||
+                                               (relWwwroot != null && MatchesWildcard(cleanInput, relWwwroot)) ||
+                                               (relPublic != null && MatchesWildcard(cleanInput, relPublic)) ||
+                                               MatchesWildcard(cleanInput, fileName);
+
+                                if (matches)
+                                {
+                                    RegisterVirtualBundleMapping(virtualFullPath, Path.GetFullPath(cssPath));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            string? resolvedInput = ResolveKnownCssPath(cleanInput);
+                            if (resolvedInput != null)
+                            {
+                                RegisterVirtualBundleMapping(virtualFullPath, resolvedInput);
+                            }
+                        }
+                    }
+
+                    foreach (var dirInclude in bundle.IncludedDirectories)
+                    {
+                        string cleanDir = dirInclude.DirectoryVirtualPath.TrimStart('~').TrimStart('/', '\\').Replace('\\', '/').TrimEnd('/');
+
+                        bool MatchesDirectory(string? rel)
+                        {
+                            if (string.IsNullOrEmpty(rel))
+                            {
+                                return false;
+                            }
+
+                            string? parentDir = Path.GetDirectoryName(rel)?.Replace('\\', '/');
+                            if (string.IsNullOrEmpty(cleanDir))
+                            {
+                                return dirInclude.SearchSubdirectories || string.IsNullOrEmpty(parentDir);
+                            }
+
+                            return dirInclude.SearchSubdirectories
+                                ? rel.StartsWith(cleanDir + "/", StringComparison.OrdinalIgnoreCase)
+                                : string.Equals(parentDir, cleanDir, StringComparison.OrdinalIgnoreCase);
+                        }
+
+                        foreach (string cssPath in resolvableCssFiles)
+                        {
+                            string relRoot = Path.GetRelativePath(normalizedRoot, cssPath).Replace('\\', '/');
+                            string? relWwwroot = relRoot.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase) ? relRoot.Substring(8) : null;
+                            string? relPublic = relRoot.StartsWith("public/", StringComparison.OrdinalIgnoreCase) ? relRoot.Substring(7) : null;
+
+                            if ((MatchesDirectory(relRoot) || MatchesDirectory(relWwwroot) || MatchesDirectory(relPublic)) &&
+                                MatchesWildcard(dirInclude.SearchPattern, Path.GetFileName(cssPath)))
+                            {
+                                RegisterVirtualBundleMapping(virtualFullPath, Path.GetFullPath(cssPath));
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Safely ignore unreadable or malformed BundleConfig.cs
             }
         }
 
@@ -610,17 +735,13 @@ public class ProjectScanner : ICssScanner
             }
         }
 
+        var allList = new List<UnusedCssFileInfo>();
         var unusedList = new List<UnusedCssFileInfo>();
         var ambiguousList = new List<UnusedCssFileInfo>();
 
         foreach (var file in cssFiles)
         {
             string full = Path.GetFullPath(file);
-            if (referencedFiles.Contains(full))
-            {
-                continue;
-            }
-
             string relativePath = Path.GetRelativePath(rootPath, file).Replace('\\', '/');
             long fileSize = 0;
             try
@@ -631,38 +752,86 @@ public class ProjectScanner : ICssScanner
             {
             }
 
-            int selectorCount = allSelectors.Count(s => string.Equals(Path.GetFullPath(s.FilePath), full, StringComparison.OrdinalIgnoreCase));
+            selectorStatsByFile.TryGetValue(full, out var stats);
 
-            if (ambiguousMap.TryGetValue(full, out var matchedBy) && matchedBy.Count > 0)
+            CssFileReferenceStatus status;
+            List<string> matchedByFiles;
+
+            if (referencedFiles.Contains(full))
             {
-                ambiguousList.Add(new UnusedCssFileInfo
-                {
-                    FilePath = file,
-                    RelativePath = relativePath,
-                    FileSizeBytes = fileSize,
-                    SelectorCount = selectorCount,
-                    Status = CssFileReferenceStatus.Ambiguous,
-                    MatchedByFiles = matchedBy.Distinct().ToList()
-                });
+                status = CssFileReferenceStatus.Referenced;
+                matchedByFiles = [];
+            }
+            else if (ambiguousMap.TryGetValue(full, out var matchedBy) && matchedBy.Count > 0)
+            {
+                status = CssFileReferenceStatus.Ambiguous;
+                matchedByFiles = matchedBy.Distinct().ToList();
             }
             else
             {
-                unusedList.Add(new UnusedCssFileInfo
+                status = CssFileReferenceStatus.Unused;
+                matchedByFiles = [];
+            }
+
+            var importedCssFiles = new List<string>();
+            if (cssImports.TryGetValue(file, out var rawImports))
+            {
+                foreach (var importRef in rawImports)
                 {
-                    FilePath = file,
-                    RelativePath = relativePath,
-                    FileSizeBytes = fileSize,
-                    SelectorCount = selectorCount,
-                    Status = CssFileReferenceStatus.Unused,
-                    MatchedByFiles = []
-                });
+                    string? target = ResolveCssTarget(importRef.ReferencePath, file, normalizedRoot, cssFileMap, cssFilesByBasename);
+                    string? importDisplay = null;
+
+                    if (target != null)
+                    {
+                        importDisplay = Path.GetRelativePath(rootPath, target).Replace('\\', '/');
+                    }
+                    else if (!importRef.ReferencePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                             !importRef.ReferencePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase) &&
+                             !importRef.ReferencePath.StartsWith("//", StringComparison.Ordinal) &&
+                             importRef.ReferencePath.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+                    {
+                        importDisplay = importRef.ReferencePath.Replace('\\', '/');
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(importDisplay) &&
+                        !importedCssFiles.Contains(importDisplay, StringComparer.OrdinalIgnoreCase))
+                    {
+                        importedCssFiles.Add(importDisplay);
+                    }
+                }
+            }
+
+            var fileInfo = new UnusedCssFileInfo
+            {
+                FilePath = file,
+                RelativePath = relativePath,
+                FileSizeBytes = fileSize,
+                SelectorCount = stats.Total,
+                TotalSelectors = stats.Total,
+                UsedSelectors = stats.Used,
+                UnusedSelectors = stats.Unused,
+                AmbiguousSelectors = stats.Ambiguous,
+                Status = status,
+                MatchedByFiles = matchedByFiles,
+                ImportedCssFiles = importedCssFiles
+            };
+
+            allList.Add(fileInfo);
+            if (status == CssFileReferenceStatus.Unused)
+            {
+                unusedList.Add(fileInfo);
+            }
+            else if (status == CssFileReferenceStatus.Ambiguous)
+            {
+                ambiguousList.Add(fileInfo);
             }
         }
 
+        allList.Sort((a, b) => string.Compare(a.RelativePath, b.RelativePath, StringComparison.OrdinalIgnoreCase));
         unusedList.Sort((a, b) => string.Compare(a.RelativePath, b.RelativePath, StringComparison.OrdinalIgnoreCase));
         ambiguousList.Sort((a, b) => string.Compare(a.RelativePath, b.RelativePath, StringComparison.OrdinalIgnoreCase));
 
-        return (unusedList, ambiguousList);
+        return (allList, unusedList, ambiguousList);
     }
 
     private static void ResolveGlobReference(

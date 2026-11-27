@@ -43,16 +43,24 @@ public static class ReportExporter
     public static async Task ExportCssFilesCsvAsync(string filePath, IReadOnlyList<CssFileRowItem> items)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("Status,RelativePath,FullFilePath,SelectorCount,FileSizeBytes,FormattedSize,Details,Selected");
+        sb.AppendLine("Status,RelativePath,FullFilePath,SelectorCount,UsedSelectors,UnusedSelectors,UsagePercentage,FileSizeBytes,FormattedSize,ImportedCssFiles,Details,Selected");
 
         foreach (CssFileRowItem item in items)
         {
+            string importedList = item.ImportedCssFiles.Count > 0
+                ? string.Join("; ", item.ImportedCssFiles)
+                : string.Empty;
+
             sb.Append(EscapeCsv(item.Status)).Append(',')
               .Append(EscapeCsv(item.RelativePath)).Append(',')
               .Append(EscapeCsv(item.FullFilePath)).Append(',')
               .Append(item.SelectorCount).Append(',')
+              .Append(item.UsedSelectors).Append(',')
+              .Append(item.UnusedSelectors).Append(',')
+              .Append($"{item.UsagePercentage:F1}").Append(',')
               .Append(item.FileSizeBytes).Append(',')
               .Append(EscapeCsv(item.FormattedSize)).Append(',')
+              .Append(EscapeCsv(importedList)).Append(',')
               .Append(EscapeCsv(item.Details)).Append(',')
               .Append(item.IsSelected ? "true" : "false")
               .AppendLine();
@@ -86,7 +94,7 @@ public static class ReportExporter
                 TotalSelectors = scanResult?.TotalCssSelectors ?? selectorItems?.Count ?? 0,
                 TotalCssFiles = scanResult?.TotalCssFiles ?? cssFileItems?.Count ?? 0,
                 UnusedCssFilesCount = scanResult?.UnusedCssFiles.Count ?? cssFileItems?.Count(f => f.IsUnused) ?? 0,
-                AmbiguousCssFilesCount = scanResult?.AmbiguousCssFiles.Count ?? cssFileItems?.Count(f => !f.IsUnused) ?? 0,
+                AmbiguousCssFilesCount = scanResult?.AmbiguousCssFiles.Count ?? cssFileItems?.Count(f => f.IsAmbiguous) ?? 0,
                 ScannedFilesCount = scanResult?.ScannedFilesCount ?? 0,
                 ExecutionTimeMs = scanResult?.ExecutionTime.TotalMilliseconds ?? 0
             },
@@ -109,8 +117,12 @@ public static class ReportExporter
                 item.RelativePath,
                 item.FullFilePath,
                 item.SelectorCount,
+                item.UsedSelectors,
+                item.UnusedSelectors,
+                item.UsagePercentage,
                 item.FileSizeBytes,
                 item.FormattedSize,
+                item.ImportedCssFiles,
                 item.Details,
                 MatchedByFiles = item.Info.MatchedByFiles,
                 item.IsSelected
