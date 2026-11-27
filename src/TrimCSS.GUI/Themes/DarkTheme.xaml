@@ -1,0 +1,44 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Surfaces & Containers -->
+    <SolidColorBrush x:Key="BgPrimary" Color="#0F0F0F" />
+    <SolidColorBrush x:Key="BgSecondary" Color="#1A1A1A" />
+    <SolidColorBrush x:Key="BgExclusionsBar" Color="#141414" />
+    <SolidColorBrush x:Key="BgCard" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="BgHover" Color="#262626" />
+    <SolidColorBrush x:Key="BorderDefaultBrush" Color="#2A2A2A" />
+
+    <!-- Typography -->
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F0F0F0" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#888888" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#A0A0A0" />
+    <SolidColorBrush x:Key="TextSubtleBrush" Color="#666666" />
+    <SolidColorBrush x:Key="TextCheckBoxBrush" Color="#E0E0E0" />
+
+    <!-- Primary & Selection -->
+    <SolidColorBrush x:Key="AccentBrush" Color="#7C5CFC" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#6A4DE8" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SelectionBgBrush" Color="#2A224D" />
+    <SolidColorBrush x:Key="SelectionFgBrush" Color="#F0F0F0" />
+
+    <!-- Semantic Status -->
+    <SolidColorBrush x:Key="RedBrush" Color="#EF4444" />
+    <SolidColorBrush x:Key="UnusedBgBrush" Color="#2B1414" />
+    <SolidColorBrush x:Key="UnusedBorderBrush" Color="#662222" />
+
+    <SolidColorBrush x:Key="YellowBrush" Color="#F59E0B" />
+    <SolidColorBrush x:Key="AmbiguousBgBrush" Color="#2B2111" />
+    <SolidColorBrush x:Key="AmbiguousBorderBrush" Color="#664400" />
+
+    <SolidColorBrush x:Key="SuccessBrush" Color="#10B981" />
+    <SolidColorBrush x:Key="SuccessBgBrush" Color="#0C2318" />
+    <SolidColorBrush x:Key="SuccessBorderBrush" Color="#14532D" />
+
+    <!-- DataGrid -->
+    <SolidColorBrush x:Key="GridLineBrush" Color="#222222" />
+    <SolidColorBrush x:Key="GridRowBgBrush" Color="#161616" />
+    <SolidColorBrush x:Key="GridAltRowBgBrush" Color="#191919" />
+
+</ResourceDictionary>

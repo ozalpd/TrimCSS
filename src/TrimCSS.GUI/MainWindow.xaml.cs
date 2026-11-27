@@ -33,6 +33,7 @@ public partial class MainWindow : Window
         _scanner = new ProjectScanner();
         FileFilterCombo.ItemsSource = new[] { AllFilesOption };
         FileFilterCombo.SelectedIndex = 0;
+        UpdateThemeToggleButton();
     }
 
     private async void SelectFolderButton_Click(object sender, RoutedEventArgs e)
@@ -47,7 +48,7 @@ public partial class MainWindow : Window
         {
             _selectedFolderPath = dialog.FolderName;
             FolderPathText.Text = _selectedFolderPath;
-            FolderPathText.Foreground = Brushes.White;
+            FolderPathText.SetResourceReference(TextBlock.ForegroundProperty, "TextPrimaryBrush");
             ScanProjectButton.IsEnabled = true;
             ExportReportButton.IsEnabled = false;
 
@@ -428,9 +429,7 @@ public partial class MainWindow : Window
 
         int unusedFiles = result.UnusedCssFiles.Count;
         StatUnusedCssFilesText.Text = $"{unusedFiles:N0} / {result.TotalCssFiles:N0}";
-        StatUnusedCssFilesText.Foreground = unusedFiles > 0
-            ? (Brush)FindResource("RedBrush")
-            : (Brush)FindResource("TextSecondaryBrush");
+        StatUnusedCssFilesText.SetResourceReference(TextBlock.ForegroundProperty, unusedFiles > 0 ? "RedBrush" : "TextSecondaryBrush");
 
         StatFilesText.Text = result.ScannedFilesCount.ToString("N0");
         StatTimeText.Text = result.ExecutionTime.TotalSeconds < 1
@@ -444,7 +443,7 @@ public partial class MainWindow : Window
         StatUnusedText.Text = "—";
         StatAmbiguousText.Text = "—";
         StatUnusedCssFilesText.Text = "—";
-        StatUnusedCssFilesText.Foreground = (Brush)FindResource("TextSecondaryBrush");
+        StatUnusedCssFilesText.SetResourceReference(TextBlock.ForegroundProperty, "TextSecondaryBrush");
         StatFilesText.Text = "—";
         StatTimeText.Text = string.Empty;
         ResultCountText.Text = string.Empty;
@@ -559,5 +558,16 @@ public partial class MainWindow : Window
         {
             item.IsSelected = isChecked;
         }
+    }
+
+    private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
+    {
+        ThemeService.ToggleTheme();
+        UpdateThemeToggleButton();
+    }
+
+    private void UpdateThemeToggleButton()
+    {
+        ThemeToggleButton.Content = ThemeService.CurrentTheme == AppTheme.Dark ? "☀ Light" : "🌙 Dark";
     }
 }

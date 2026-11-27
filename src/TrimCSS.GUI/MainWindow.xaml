@@ -8,26 +8,15 @@
         MinHeight="540"
         Icon="Assets/TrimCSS-Icon.ico"
         WindowStartupLocation="CenterScreen"
-        Background="#0F0F0F"
-        Foreground="#F0F0F0"
+        Background="{DynamicResource BgPrimary}"
+        Foreground="{DynamicResource TextPrimaryBrush}"
         FontFamily="Segoe UI">
 
     <Window.Resources>
-        <SolidColorBrush x:Key="BgPrimary" Color="#0F0F0F" />
-        <SolidColorBrush x:Key="BgSecondary" Color="#1A1A1A" />
-        <SolidColorBrush x:Key="BgCard" Color="#1E1E1E" />
-        <SolidColorBrush x:Key="BgHover" Color="#262626" />
-        <SolidColorBrush x:Key="BorderBrushDark" Color="#2A2A2A" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#7C5CFC" />
-        <SolidColorBrush x:Key="AccentHoverBrush" Color="#6A4DE8" />
-        <SolidColorBrush x:Key="RedBrush" Color="#EF4444" />
-        <SolidColorBrush x:Key="YellowBrush" Color="#F59E0B" />
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#888888" />
-
         <!-- Primary Button -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="Padding" Value="16,7" />
@@ -41,7 +30,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.4" />
@@ -54,12 +43,12 @@
 
         <!-- Secondary Button -->
         <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource BgCard}" />
-            <Setter Property="Foreground" Value="#F0F0F0" />
+            <Setter Property="Background" Value="{DynamicResource BgCard}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="FontSize" Value="12.5" />
             <Setter Property="Padding" Value="14,7" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushDark}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="Template">
@@ -70,7 +59,7 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BgHover}" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BgHover}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Bd" Property="Opacity" Value="0.4" />
@@ -83,7 +72,7 @@
 
         <!-- Filter Pill RadioButton -->
         <Style x:Key="FilterPillStyle" TargetType="RadioButton">
-            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -97,21 +86,22 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource BgHover}" />
-                                <Setter Property="Foreground" Value="#F0F0F0" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BgHover}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentBrush}" />
-                                <Setter Property="Foreground" Value="White" />
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-        <!-- Dark CheckBox Style -->
+
+        <!-- Theme-Aware CheckBox Style -->
         <Style x:Key="DarkCheckBoxStyle" TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#E0E0E0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextCheckBoxBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -122,14 +112,14 @@
                             <Border x:Name="Box"
                                     Width="16"
                                     Height="16"
-                                    Background="{StaticResource BgPrimary}"
-                                    BorderBrush="{StaticResource BorderBrushDark}"
+                                    Background="{DynamicResource BgPrimary}"
+                                    BorderBrush="{DynamicResource BorderDefaultBrush}"
                                     BorderThickness="1"
                                     CornerRadius="3"
                                     VerticalAlignment="Center">
                                 <Path x:Name="CheckMark"
                                       Data="M 3 8 L 6 11 L 13 4"
-                                      Stroke="{StaticResource AccentBrush}"
+                                      Stroke="{DynamicResource AccentBrush}"
                                       StrokeThickness="2"
                                       StrokeStartLineCap="Round"
                                       StrokeEndLineCap="Round"
@@ -140,10 +130,10 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="CheckMark" Property="Visibility" Value="Visible" />
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentHoverBrush}" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter Property="Opacity" Value="0.4" />
@@ -168,7 +158,7 @@
         </Grid.RowDefinitions>
 
         <!-- Row 0: Top Action Bar -->
-        <Border Grid.Row="0" Background="{StaticResource BgSecondary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,10">
+        <Border Grid.Row="0" Background="{DynamicResource BgSecondary}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="16,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -181,7 +171,7 @@
                                Text="No folder selected"
                                FontFamily="Consolas"
                                FontSize="12"
-                               Foreground="{StaticResource TextSecondaryBrush}"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
                                TextTrimming="CharacterEllipsis"
                                VerticalAlignment="Center" />
                 </StackPanel>
@@ -203,12 +193,18 @@
                             Style="{StaticResource SecondaryButtonStyle}"
                             IsEnabled="False"
                             Click="ExportReportButton_Click" />
+                    <Button x:Name="ThemeToggleButton"
+                            Content="☀ Light"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="8,0,0,0"
+                            ToolTip="Switch between Dark and Light themes"
+                            Click="ThemeToggleButton_Click" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Row 1: Exclusion Rules Bar -->
-        <Border Grid.Row="1" Background="#141414" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,8">
+        <Border Grid.Row="1" Background="{DynamicResource BgExclusionsBar}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -217,15 +213,15 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
-                    <TextBlock Text="Exclusions:" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="Exclusions:" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <TextBox x:Name="ExclusionFilterBox"
                          Grid.Column="1"
-                         Background="{StaticResource BgPrimary}"
-                         Foreground="#F0F0F0"
-                         CaretBrush="#F0F0F0"
-                         BorderBrush="{StaticResource BorderBrushDark}"
+                         Background="{DynamicResource BgPrimary}"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         CaretBrush="{DynamicResource TextPrimaryBrush}"
+                         BorderBrush="{DynamicResource BorderDefaultBrush}"
                          BorderThickness="1"
                          Padding="8,5"
                          FontSize="12"
@@ -246,46 +242,46 @@
         </Border>
 
         <!-- Row 2: Metrics Strip -->
-        <Border Grid.Row="2" Background="{StaticResource BorderBrushDark}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1">
+        <Border Grid.Row="2" Background="{DynamicResource BorderDefaultBrush}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1">
             <UniformGrid Columns="5">
-                <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
+                <Border Background="{DynamicResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
                         <TextBlock x:Name="StatTotalText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" />
-                        <TextBlock Text="TOTAL CSS SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        <TextBlock Text="TOTAL CSS SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
-                <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
+                <Border Background="{DynamicResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
-                        <TextBlock x:Name="StatUnusedText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{StaticResource RedBrush}" />
-                        <TextBlock Text="UNUSED SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        <TextBlock x:Name="StatUnusedText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource RedBrush}" />
+                        <TextBlock Text="UNUSED SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
-                <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
+                <Border Background="{DynamicResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
-                        <TextBlock x:Name="StatAmbiguousText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{StaticResource YellowBrush}" />
-                        <TextBlock Text="AMBIGUOUS SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        <TextBlock x:Name="StatAmbiguousText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource YellowBrush}" />
+                        <TextBlock Text="AMBIGUOUS SELECTORS" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
-                <Border Background="{StaticResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
+                <Border Background="{DynamicResource BgSecondary}" Padding="16,12" Margin="0,0,1,0">
                     <StackPanel>
-                        <TextBlock x:Name="StatUnusedCssFilesText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{StaticResource RedBrush}" />
-                        <TextBlock Text="UNUSED CSS FILES" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        <TextBlock x:Name="StatUnusedCssFilesText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource RedBrush}" />
+                        <TextBlock Text="UNUSED CSS FILES" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
-                <Border Background="{StaticResource BgSecondary}" Padding="16,12">
+                <Border Background="{DynamicResource BgSecondary}" Padding="16,12">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock x:Name="StatFilesText" Text="—" FontFamily="Consolas" FontSize="22" FontWeight="Bold" />
-                            <TextBlock x:Name="StatTimeText" Text="" FontFamily="Consolas" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="8,0,0,3" />
+                            <TextBlock x:Name="StatTimeText" Text="" FontFamily="Consolas" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Bottom" Margin="8,0,0,3" />
                         </StackPanel>
-                        <TextBlock Text="SCANNED FILES" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                        <TextBlock Text="SCANNED FILES" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
                     </StackPanel>
                 </Border>
             </UniformGrid>
         </Border>
 
         <!-- Row 3: Filter Controls -->
-        <Border Grid.Row="3" Background="{StaticResource BgSecondary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="0,0,0,1" Padding="16,8">
+        <Border Grid.Row="3" Background="{DynamicResource BgSecondary}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="0,0,0,1" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -296,7 +292,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- View Mode Switcher -->
-                <Border Grid.Column="0" Background="{StaticResource BgPrimary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
+                <Border Grid.Column="0" Background="{DynamicResource BgPrimary}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton x:Name="ViewModeSelectorsRadio" GroupName="ViewMode" Content="Selectors" Style="{StaticResource FilterPillStyle}" IsChecked="True" Checked="ViewModeChanged" />
                         <RadioButton x:Name="ViewModeCssFilesRadio" GroupName="ViewMode" Content="CSS Files" Style="{StaticResource FilterPillStyle}" Checked="ViewModeChanged" />
@@ -304,7 +300,7 @@
                 </Border>
 
                 <!-- Status Pills -->
-                <Border Grid.Column="1" Background="{StaticResource BgPrimary}" BorderBrush="{StaticResource BorderBrushDark}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
+                <Border Grid.Column="1" Background="{DynamicResource BgPrimary}" BorderBrush="{DynamicResource BorderDefaultBrush}" BorderThickness="1" CornerRadius="6" Padding="3" Margin="0,0,10,0">
                     <StackPanel Orientation="Horizontal">
                         <RadioButton x:Name="FilterAllRadio" GroupName="StatusFilter" Content="All Flagged" Style="{StaticResource FilterPillStyle}" IsChecked="True" Checked="FilterChanged" />
                         <RadioButton x:Name="FilterUnusedRadio" GroupName="StatusFilter" Content="Unused Only" Style="{StaticResource FilterPillStyle}" Checked="FilterChanged" />
@@ -315,10 +311,10 @@
                 <!-- Search TextBox -->
                 <TextBox x:Name="SearchBox"
                          Grid.Column="2"
-                         Background="{StaticResource BgPrimary}"
-                         Foreground="#F0F0F0"
-                         CaretBrush="#F0F0F0"
-                         BorderBrush="{StaticResource BorderBrushDark}"
+                         Background="{DynamicResource BgPrimary}"
+                         Foreground="{DynamicResource TextPrimaryBrush}"
+                         CaretBrush="{DynamicResource TextPrimaryBrush}"
+                         BorderBrush="{DynamicResource BorderDefaultBrush}"
                          BorderThickness="1"
                          Padding="8,5"
                          FontSize="12.5"
@@ -341,7 +337,7 @@
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
                            FontSize="12"
-                           Foreground="{StaticResource TextSecondaryBrush}" />
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
             </Grid>
         </Border>
 
@@ -355,7 +351,7 @@
                 <TextBlock x:Name="EmptyStateMessage"
                            Text="Select a project folder and click Scan Project to detect unused CSS selectors."
                            FontSize="13.5"
-                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
                            TextAlignment="Center" />
             </StackPanel>
 
@@ -369,11 +365,11 @@
                       IsReadOnly="False"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#222222"
-                      Background="{StaticResource BgPrimary}"
-                      Foreground="#F0F0F0"
-                      RowBackground="#161616"
-                      AlternatingRowBackground="#191919"
+                      HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                      Background="{DynamicResource BgPrimary}"
+                      Foreground="{DynamicResource TextPrimaryBrush}"
+                      RowBackground="{DynamicResource GridRowBgBrush}"
+                      AlternatingRowBackground="{DynamicResource GridAltRowBgBrush}"
                       BorderThickness="0"
                       EnableRowVirtualization="True"
                       EnableColumnVirtualization="True"
@@ -384,12 +380,12 @@
 
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#1A1A1A" />
-                        <Setter Property="Foreground" Value="#888888" />
+                        <Setter Property="Background" Value="{DynamicResource BgSecondary}" />
+                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                         <Setter Property="FontWeight" Value="SemiBold" />
                         <Setter Property="FontSize" Value="11" />
                         <Setter Property="Padding" Value="10,8" />
-                        <Setter Property="BorderBrush" Value="#2A2A2A" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
                         <Setter Property="BorderThickness" Value="0,0,0,1" />
                     </Style>
                 </DataGrid.ColumnHeaderStyle>
@@ -409,8 +405,8 @@
                         </Setter>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#2A224D" />
-                                <Setter Property="Foreground" Value="#F0F0F0" />
+                                <Setter Property="Background" Value="{DynamicResource SelectionBgBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource SelectionFgBrush}" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -431,13 +427,13 @@
                                 <Border CornerRadius="3" Padding="7,2" HorizontalAlignment="Left">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#2B2111" />
-                                            <Setter Property="BorderBrush" Value="#664400" />
+                                            <Setter Property="Background" Value="{DynamicResource AmbiguousBgBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AmbiguousBorderBrush}" />
                                             <Setter Property="BorderThickness" Value="1" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsUnused}" Value="True">
-                                                    <Setter Property="Background" Value="#2B1414" />
-                                                    <Setter Property="BorderBrush" Value="#662222" />
+                                                    <Setter Property="Background" Value="{DynamicResource UnusedBgBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource UnusedBorderBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -445,10 +441,10 @@
                                     <TextBlock Text="{Binding Status}" FontSize="10.5" FontWeight="Bold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#F59E0B" />
+                                                <Setter Property="Foreground" Value="{DynamicResource YellowBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsUnused}" Value="True">
-                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -463,13 +459,31 @@
                     <DataGridTextColumn Header="SELECTOR" Width="2*" Binding="{Binding SelectorText}" FontFamily="Consolas" FontSize="12" IsReadOnly="True" />
 
                     <!-- Target Classes -->
-                    <DataGridTextColumn Header="TARGET CLASSES" Width="1.5*" Binding="{Binding TargetClassesDisplay}" FontFamily="Consolas" FontSize="11.5" Foreground="#A0A0A0" IsReadOnly="True" />
+                    <DataGridTextColumn Header="TARGET CLASSES" Width="1.5*" Binding="{Binding TargetClassesDisplay}" FontFamily="Consolas" FontSize="11.5" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
                     <!-- CSS File -->
-                    <DataGridTextColumn Header="CSS FILE" Width="1.5*" Binding="{Binding RelativeFilePath}" FontFamily="Consolas" FontSize="11.5" Foreground="#888888" IsReadOnly="True" />
+                    <DataGridTextColumn Header="CSS FILE" Width="1.5*" Binding="{Binding RelativeFilePath}" FontFamily="Consolas" FontSize="11.5" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
                     <!-- Location -->
-                    <DataGridTextColumn Header="LOCATION" Width="90" Binding="{Binding Location}" FontFamily="Consolas" FontSize="11.5" Foreground="#666666" IsReadOnly="True" />
+                    <DataGridTextColumn Header="LOCATION" Width="90" Binding="{Binding Location}" FontFamily="Consolas" FontSize="11.5" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSubtleBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -483,11 +497,11 @@
                       IsReadOnly="False"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#222222"
-                      Background="{StaticResource BgPrimary}"
-                      Foreground="#F0F0F0"
-                      RowBackground="#161616"
-                      AlternatingRowBackground="#191919"
+                      HorizontalGridLinesBrush="{DynamicResource GridLineBrush}"
+                      Background="{DynamicResource BgPrimary}"
+                      Foreground="{DynamicResource TextPrimaryBrush}"
+                      RowBackground="{DynamicResource GridRowBgBrush}"
+                      AlternatingRowBackground="{DynamicResource GridAltRowBgBrush}"
                       BorderThickness="0"
                       EnableRowVirtualization="True"
                       EnableColumnVirtualization="True"
@@ -498,12 +512,12 @@
 
                 <DataGrid.ColumnHeaderStyle>
                     <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#1A1A1A" />
-                        <Setter Property="Foreground" Value="#888888" />
+                        <Setter Property="Background" Value="{DynamicResource BgSecondary}" />
+                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                         <Setter Property="FontWeight" Value="SemiBold" />
                         <Setter Property="FontSize" Value="11" />
                         <Setter Property="Padding" Value="10,8" />
-                        <Setter Property="BorderBrush" Value="#2A2A2A" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource BorderDefaultBrush}" />
                         <Setter Property="BorderThickness" Value="0,0,0,1" />
                     </Style>
                 </DataGrid.ColumnHeaderStyle>
@@ -523,8 +537,8 @@
                         </Setter>
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#2A224D" />
-                                <Setter Property="Foreground" Value="#F0F0F0" />
+                                <Setter Property="Background" Value="{DynamicResource SelectionBgBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource SelectionFgBrush}" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -545,13 +559,13 @@
                                 <Border CornerRadius="3" Padding="7,2" HorizontalAlignment="Left">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#2B2111" />
-                                            <Setter Property="BorderBrush" Value="#664400" />
+                                            <Setter Property="Background" Value="{DynamicResource AmbiguousBgBrush}" />
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AmbiguousBorderBrush}" />
                                             <Setter Property="BorderThickness" Value="1" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsUnused}" Value="True">
-                                                    <Setter Property="Background" Value="#2B1414" />
-                                                    <Setter Property="BorderBrush" Value="#662222" />
+                                                    <Setter Property="Background" Value="{DynamicResource UnusedBgBrush}" />
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource UnusedBorderBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -559,10 +573,10 @@
                                     <TextBlock Text="{Binding Status}" FontSize="10.5" FontWeight="Bold">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="#F59E0B" />
+                                                <Setter Property="Foreground" Value="{DynamicResource YellowBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsUnused}" Value="True">
-                                                        <Setter Property="Foreground" Value="#EF4444" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource RedBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -577,13 +591,31 @@
                     <DataGridTextColumn Header="CSS FILE" Width="2.5*" Binding="{Binding RelativePath}" FontFamily="Consolas" FontSize="12" IsReadOnly="True" />
 
                     <!-- Selectors -->
-                    <DataGridTextColumn Header="SELECTORS" Width="100" Binding="{Binding SelectorCount}" FontFamily="Consolas" FontSize="11.5" Foreground="#A0A0A0" IsReadOnly="True" />
+                    <DataGridTextColumn Header="SELECTORS" Width="100" Binding="{Binding SelectorCount}" FontFamily="Consolas" FontSize="11.5" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
                     <!-- Size -->
-                    <DataGridTextColumn Header="SIZE" Width="90" Binding="{Binding FormattedSize}" FontFamily="Consolas" FontSize="11.5" Foreground="#888888" IsReadOnly="True" />
+                    <DataGridTextColumn Header="SIZE" Width="90" Binding="{Binding FormattedSize}" FontFamily="Consolas" FontSize="11.5" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
 
                     <!-- Details -->
-                    <DataGridTextColumn Header="DETAILS" Width="3*" Binding="{Binding Details}" FontFamily="Consolas" FontSize="11" Foreground="#666666" IsReadOnly="True" />
+                    <DataGridTextColumn Header="DETAILS" Width="3*" Binding="{Binding Details}" FontFamily="Consolas" FontSize="11" IsReadOnly="True">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{DynamicResource TextSubtleBrush}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
