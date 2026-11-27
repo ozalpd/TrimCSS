@@ -30,7 +30,8 @@ TrimCSS.slnx
     │   ├── MainWindow.xaml
     │   ├── MainWindow.xaml.cs
     │   ├── Models/              # SelectorRowItem, CssFileRowItem
-    │   └── Services/            # ReportExporter
+    │   ├── Services/            # ReportExporter, ThemeService
+    │   └── Themes/              # DarkTheme.xaml, LightTheme.xaml
     └── TrimCSS.Tests/           # xUnit tests (net10.0)
         ├── CssDiffGeneratorTests.cs
         ├── CssFileReferenceTests.cs
@@ -59,6 +60,7 @@ TrimCSS.slnx
 - Virtualized `DataGrid` is load‑bearing; keep row/column virtualization enabled.
 - New **CSS Files** view presents file‑level audit data.
 - **ReportExporter** now supports CSV and JSON export of selector and file audit results.
+- **Runtime theming**: `ThemeService` swaps `Themes/DarkTheme.xaml` and `Themes/LightTheme.xaml` in `Application.Current.Resources.MergedDictionaries` and persists the preference to `%LocalAppData%\TrimCSS\theme.txt`. Keep all theme-dependent brushes bound via `{DynamicResource ...}` in XAML (including `DataGridTextColumn.ElementStyle`) and `SetResourceReference` in code-behind.
 
 ---
 

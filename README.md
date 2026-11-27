@@ -28,6 +28,7 @@ The solution separates the scanning logic from the UI:
 - **Unreferenced/unused CSS stylesheet detection** (`CssFileReferenceStatus` / `UnusedCssFileInfo`)
 - **Line‑level CSS Diff Generator** (`CssDiffGenerator` with context collapsing)
 - **Exporting filtered scan reports to CSV and JSON** (`ReportExporter`)
+- **Runtime Dark & Light theme switching** with persistent preference (`DarkTheme.xaml`, `LightTheme.xaml`, `ThemeService`)
 - High‑Performance Virtualized WPF Grid
 - Instant Filtering by status, file, and search keywords
 
@@ -64,7 +65,7 @@ dotnet run --project src/TrimCSS.GUI
 - [x] Custom folder and file exclusion patterns
 - [x] Exporting filtered scan reports to CSV and JSON
 - [ ] CSS rule pruning & removal (modal confirmation, `.bak` backups)
-- [ ] Light theme variant for the UI
+- [x] Light theme variant for the UI
 - [ ] Export diff previews to HTML for richer reporting
 
 ---

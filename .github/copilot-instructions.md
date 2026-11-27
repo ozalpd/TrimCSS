@@ -10,4 +10,4 @@ Short version:
 - **UI virtualization is load-bearing:** Real-world projects routinely flag 25,000+ selectors. Keep row/column virtualization (`VirtualizingPanel.VirtualizationMode="Recycling"`) enabled on `ResultsGrid` in `MainWindow.xaml`, and filter via `ICollectionView`.
 - **Testing & validation:** Any new parser rule, exclusion filter, or CSS refactoring logic in `TrimCSS.Core` must have xUnit tests in `TrimCSS.Tests`. Validate with `dotnet build` and `dotnet test` before finishing.
 - **Workspace hygiene:** Never commit `session-state/` scratch artifacts.
-- **UI & styling:** Follow **[Design.md](../Design.md)** for color tokens, native Windows fonts, and layout conventions when editing `TrimCSS.GUI`.
+- **UI & styling:** Follow **[Design.md](../Design.md)** for color tokens, native Windows fonts, and layout conventions when editing `TrimCSS.GUI`. Runtime Dark and Light themes are defined in `Themes/DarkTheme.xaml` and `Themes/LightTheme.xaml` and managed by `ThemeService`; bind all theme-dependent brushes with `{DynamicResource}` in XAML (and `SetResourceReference` in code-behind).

@@ -10,14 +10,14 @@ TrimCSS is a native **.NET 10 WPF desktop application** built for scanning web p
 The visual style embodies precision developer tools:
 - **Platform & Runtime**: Built for **.NET 10 WPF (`net10.0-windows`)** utilizing `VirtualizingStackPanel`‑backed `DataGrid` controls (`VirtualizationMode="Recycling"`) with zero third‑party UI dependencies.
 - **Compact & High‑Density**: Tight gutters, disciplined row heights, and inline monospaced indicators that keep tens of thousands of selectors legible and responsive.
-- **Obsidian Dark Theme (Current)**: Deep obsidian surfaces (`#0F0F0F`, `#1A1A1A`, `#1E1E1E`) engineered to minimize eye strain during extended audits, punctuated with vivid electric purple primary actions (`#7C5CFC`) and high‑visibility semantic status pills.
+- **Dual Themes (Obsidian Dark & Soft‑Slate Light)**: Switchable at runtime via `ThemeService` (`Themes/DarkTheme.xaml` and `Themes/LightTheme.xaml`) with persistent user preference. Deep obsidian surfaces (`#0F0F0F`, `#1A1A1A`, `#1E1E1E`) and vivid electric purple primary actions (`#7C5CFC`) anchor dark mode, paired with high‑contrast soft‑slate surfaces (`#F8FAFC`, `#F1F5F9`, `#FFFFFF`) in light mode.
 - **Architectural Clarity**: Subtle `1px` borders (`#2A2A2A`), purposeful dividers, and monospaced code blocks eliminate ambiguity between selectors, target classes, line numbers, and relative file paths.
 
 ---
 
 ## Colors
 
-TrimCSS uses semantic role pairings tuned for high scannability across dense data grids. The **Dark** palette reflects the active `MainWindow.xaml` implementation; the **Light** palette is reserved for future `ResourceDictionary` theme switching.
+TrimCSS uses semantic role pairings tuned for high scannability across dense data grids. Both the **Dark** (`Themes/DarkTheme.xaml`) and **Light** (`Themes/LightTheme.xaml`) palettes are active and switchable at runtime via `ThemeService` using `{DynamicResource}` brush bindings.
 
 - **Primary**: Electric purple (`#7C5CFC`, hover `#6A4DE8`) with crisp `#FFFFFF` foreground text (`>= 4.5:1` contrast) used for dominant actions ("Scan Project") and active filter pills.
 - **Status Unused (Error/Flagged)**: Crimson badge styling (`#EF4444` text on `#2B1414` fill with `#662222` border in dark mode) to tag unreferenced CSS rules.
@@ -60,7 +60,7 @@ colors:
     on-surface-variant: "#888888"
     outline: "#666666"
     outline-variant: "#2A2A2A"
-  light: # Planned (ResourceDictionary theme switching)
+  light: # Implemented (Themes/LightTheme.xaml)
     primary: "#6A4DE8"
     on-primary: "#FFFFFF"
     primary-container: "#EDE9FE"
@@ -82,7 +82,7 @@ colors:
 
 `MainWindow.xaml` uses a vertical multi‑row `Grid` (`1280×760` default, `900×540` minimum):
 
-1. **Top Action Bar (`Row 0`)**: Displays the active project folder path (`Consolas`, ellipsis‑trimmed) on the left and primary actions (`Select Folder`, `Scan Project`, `Export Report`) on the right.
+1. **Top Action Bar (`Row 0`)**: Displays the active project folder path (`Consolas`, ellipsis‑trimmed) on the left and primary actions (`Select Folder`, `Scan Project`, `Export Report`, and the runtime `ThemeToggleButton`) on the right.
 2. **Metrics Strip (`Row 1`)**: Four equal‑width KPI cards separated by `1px` `#2A2A2A` dividers (`TOTAL CSS SELECTORS`, `UNUSED SELECTORS`, `AMBIGUOUS SELECTORS`, and `SCANNED FILES` with execution time).
 3. **Exclusion Rules Bar (`Row 2`)**: Configurable ignored folders and wildcard file patterns plus a quick `Exclude vendor CSS` toggle.
 4. **Filter Controls (`Row 3`)**: Segmented status filter pills (`All Flagged`, `Unused Only`, `Ambiguous Only`), keyword `SearchBox`, CSS file dropdown (`ComboBox`), and live visible result counter.
@@ -97,7 +97,6 @@ colors:
 The following design elements are planned for future iterations and are **not yet implemented** in `TrimCSS.GUI`:
 
 - **CSS Rule Removal & Diff Preview**: Action bar button (`Remove Selected`) opening a side‑by‑side diff confirmation dialog. The **diff engine** (`CssDiffGenerator`) is already implemented in `TrimCSS.Core`; the GUI modal and automatic `.bak` file backups remain planned.
-- **Theme Switcher (`DarkTheme.xaml` / `LightTheme.xaml`)**: Runtime `ResourceDictionary` swap supporting the Soft‑Slate Light palette defined above.
 - **Custom `WindowChrome` & Bottom `StatusBar`**: Compact custom titlebar and dedicated `28px` footer bar for live scan progress and active exclusion indicators.
 
 ---

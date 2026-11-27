@@ -27,7 +27,8 @@ TrimCSS.slnx
     │   ├── MainWindow.xaml
     │   ├── MainWindow.xaml.cs
     │   ├── Models/              # SelectorRowItem, CssFileRowItem
-    │   └── Services/            # ReportExporter
+    │   ├── Services/            # ReportExporter, ThemeService
+    │   └── Themes/              # DarkTheme.xaml, LightTheme.xaml
     └── TrimCSS.Tests/           # xUnit tests (net10.0)
         ├── CssDiffGeneratorTests.cs
         ├── CssFileReferenceTests.cs
@@ -57,11 +58,13 @@ dotnet test                                   # Run all xUnit tests
 - **Unused CSS file detection** (`CssFileReferenceStatus`, `UnusedCssFileInfo`).
 - **Line‑level CSS diff generator** (`CssDiffGenerator`).
 - **Report exporting** to CSV/JSON (`ReportExporter`).
+- **Runtime Dark & Light themes** via `Themes/DarkTheme.xaml`, `Themes/LightTheme.xaml`, and `ThemeService` (with `%LocalAppData%\TrimCSS\theme.txt` persistence).
 
 ---
 
 ## Conventions
 
 - C# 12+, .NET 10, file‑scoped namespaces, nullable reference types.
+- In `TrimCSS.GUI`, use `{DynamicResource ...}` for theme brushes in XAML (`DataGridTextColumn.ElementStyle` for text columns) and `SetResourceReference` in code‑behind so runtime theme switching updates all UI elements cleanly.
 - Every new parser rule, exclusion filter, or refactoring feature must have corresponding tests.
 - Do not commit temporary workspace folders such as `session-state/`.
